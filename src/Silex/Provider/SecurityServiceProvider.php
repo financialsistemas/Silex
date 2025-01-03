@@ -358,8 +358,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                 $app['security.token_storage'],
                 $app['security.access_manager'],
                 $app['security.access_map'],
-                $app['security.authentication_manager'],
-                $app['logger']
+                $app['security.authentication_manager']
             );
         };
 

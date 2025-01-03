@@ -39,7 +39,7 @@
         "symfony/intl": "^4.0",
         "symfony/monolog-bridge": "^4.0",
         "symfony/options-resolver": "^4.0",
-        "symfony/phpunit-bridge": "^3.2",
+        "symfony/phpunit-bridge": "^4.0",
         "symfony/process": "^4.0",
         "symfony/security": "^4.0",
         "symfony/serializer": "^4.0",

@@ -11,28 +11,32 @@
 
 namespace Silex;
 
+use Exception;
+use LogicException;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
+use RuntimeException;
+use Silex\Api\BootableProviderInterface;
+use Silex\Api\ControllerProviderInterface;
+use Silex\Api\EventListenerProviderInterface;
+use Silex\Provider\ExceptionHandlerServiceProvider;
+use Silex\Provider\HttpKernelServiceProvider;
+use Silex\Provider\RoutingServiceProvider;
+use SplFileInfo;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpKernel\HttpKernelInterface;
-use Symfony\Component\HttpKernel\TerminableInterface;
-use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
-use Symfony\Component\HttpKernel\Event\PostResponseEvent;
-use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Silex\Api\BootableProviderInterface;
-use Silex\Api\EventListenerProviderInterface;
-use Silex\Api\ControllerProviderInterface;
-use Silex\Provider\ExceptionHandlerServiceProvider;
-use Silex\Provider\RoutingServiceProvider;
-use Silex\Provider\HttpKernelServiceProvider;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
+use Symfony\Component\HttpKernel\Event\TerminateEvent;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\HttpKernel\TerminableInterface;
 
 /**
  * The Silex framework class.
@@ -83,7 +87,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      *
      * @return Application
      */
-    public function register(ServiceProviderInterface $provider, array $values = [])
+    public function register(ServiceProviderInterface $provider, array $values = []): Application
     {
         $this->providers[] = $provider;
 
@@ -127,7 +131,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      *
      * @return Controller
      */
-    public function match($pattern, $to = null)
+    public function match(string $pattern, $to = null): Controller
     {
         return $this['controllers']->match($pattern, $to);
     }
@@ -140,7 +144,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      *
      * @return Controller
      */
-    public function get($pattern, $to = null)
+    public function get(string $pattern, $to = null): Controller
     {
         return $this['controllers']->get($pattern, $to);
     }
@@ -153,7 +157,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      *
      * @return Controller
      */
-    public function post($pattern, $to = null)
+    public function post(string $pattern, $to = null): Controller
     {
         return $this['controllers']->post($pattern, $to);
     }
@@ -166,7 +170,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      *
      * @return Controller
      */
-    public function put($pattern, $to = null)
+    public function put(string $pattern, $to = null): Controller
     {
         return $this['controllers']->put($pattern, $to);
     }
@@ -192,7 +196,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      *
      * @return Controller
      */
-    public function options($pattern, $to = null)
+    public function options(string $pattern, $to = null): Controller
     {
         return $this['controllers']->options($pattern, $to);
     }
@@ -205,7 +209,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      *
      * @return Controller
      */
-    public function patch($pattern, $to = null)
+    public function patch(string $pattern, $to = null): Controller
     {
         return $this['controllers']->patch($pattern, $to);
     }
@@ -213,12 +217,12 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
     /**
      * Adds an event listener that listens on the specified events.
      *
-     * @param string   $eventName The event to listen on
+     * @param string $eventName The event to listen on
      * @param callable $callback  The listener
-     * @param int      $priority  The higher this value, the earlier an event
+     * @param int $priority  The higher this value, the earlier an event
      *                            listener will be triggered in the chain (defaults to 0)
      */
-    public function on($eventName, $callback, $priority = 0)
+    public function on(string $eventName, callable $callback, int $priority = 0)
     {
         if ($this->booted) {
             $this['dispatcher']->addListener($eventName, $this['callback_resolver']->resolveCallback($callback), $priority);
@@ -239,14 +243,14 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      * Before filters are run before any route has been matched.
      *
      * @param mixed $callback Before filter callback
-     * @param int   $priority The higher this value, the earlier an event
+     * @param int $priority The higher this value, the earlier an event
      *                        listener will be triggered in the chain (defaults to 0)
      */
-    public function before($callback, $priority = 0)
+    public function before($callback, int $priority = 0)
     {
-        $app = $this;
+        $this->on(KernelEvents::REQUEST, function (RequestEvent $event) use ($callback) {
+            $app = $this;
 
-        $this->on(KernelEvents::REQUEST, function (GetResponseEvent $event) use ($callback, $app) {
             if (!$event->isMasterRequest()) {
                 return;
             }
@@ -265,14 +269,14 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      * After filters are run after the controller has been executed.
      *
      * @param mixed $callback After filter callback
-     * @param int   $priority The higher this value, the earlier an event
+     * @param int $priority The higher this value, the earlier an event
      *                        listener will be triggered in the chain (defaults to 0)
      */
-    public function after($callback, $priority = 0)
+    public function after($callback, int $priority = 0)
     {
-        $app = $this;
+        $this->on(KernelEvents::RESPONSE, function (ResponseEvent $event) use ($callback) {
+            $app = $this;
 
-        $this->on(KernelEvents::RESPONSE, function (FilterResponseEvent $event) use ($callback, $app) {
             if (!$event->isMasterRequest()) {
                 return;
             }
@@ -281,7 +285,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
             if ($response instanceof Response) {
                 $event->setResponse($response);
             } elseif (null !== $response) {
-                throw new \RuntimeException('An after middleware returned an invalid response value. Must return null or an instance of Response.');
+                throw new RuntimeException('An after middleware returned an invalid response value. Must return null or an instance of Response.');
             }
         }, $priority);
     }
@@ -292,14 +296,14 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      * Finish filters are run after the response has been sent.
      *
      * @param mixed $callback Finish filter callback
-     * @param int   $priority The higher this value, the earlier an event
+     * @param int $priority The higher this value, the earlier an event
      *                        listener will be triggered in the chain (defaults to 0)
      */
-    public function finish($callback, $priority = 0)
+    public function finish($callback, int $priority = 0)
     {
         $app = $this;
 
-        $this->on(KernelEvents::TERMINATE, function (PostResponseEvent $event) use ($callback, $app) {
+        $this->on(KernelEvents::TERMINATE, function (TerminateEvent $event) use ($callback, $app) {
             call_user_func($app['callback_resolver']->resolveCallback($callback), $event->getRequest(), $event->getResponse(), $app);
         }, $priority);
     }
@@ -307,11 +311,11 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
     /**
      * Aborts the current request by sending a proper HTTP error.
      *
-     * @param int    $statusCode The HTTP status code
+     * @param int $statusCode The HTTP status code
      * @param string $message    The status message
      * @param array  $headers    An array of HTTP headers
      */
-    public function abort($statusCode, $message = '', array $headers = [])
+    public function abort(int $statusCode, string $message = '', array $headers = [])
     {
         throw new HttpException($statusCode, $message, null, $headers);
     }
@@ -330,10 +334,10 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      * For this reason you should add logging handlers before output handlers.
      *
      * @param mixed $callback Error handler callback, takes an Exception argument
-     * @param int   $priority The higher this value, the earlier an event
+     * @param int $priority The higher this value, the earlier an event
      *                        listener will be triggered in the chain (defaults to -8)
      */
-    public function error($callback, $priority = -8)
+    public function error($callback, int $priority = -8)
     {
         $this->on(KernelEvents::EXCEPTION, new ExceptionListenerWrapper($this, $callback), $priority);
     }
@@ -347,10 +351,10 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      * called, until one returns a Response object.
      *
      * @param mixed $callback View handler callback
-     * @param int   $priority The higher this value, the earlier an event
+     * @param int $priority The higher this value, the earlier an event
      *                        listener will be triggered in the chain (defaults to 0)
      */
-    public function view($callback, $priority = 0)
+    public function view($callback, int $priority = 0)
     {
         $this->on(KernelEvents::VIEW, new ViewListenerWrapper($this, $callback), $priority);
     }
@@ -367,11 +371,11 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      * Redirects the user to another URL.
      *
      * @param string $url    The URL to redirect to
-     * @param int    $status The status code (302 by default)
+     * @param int $status The status code (302 by default)
      *
      * @return RedirectResponse
      */
-    public function redirect($url, $status = 302)
+    public function redirect(string $url, int $status = 302): RedirectResponse
     {
         return new RedirectResponse($url, $status);
     }
@@ -380,12 +384,12 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      * Creates a streaming response.
      *
      * @param mixed $callback A valid PHP callback
-     * @param int   $status   The response status code
+     * @param int $status   The response status code
      * @param array $headers  An array of response headers
      *
      * @return StreamedResponse
      */
-    public function stream($callback = null, $status = 200, array $headers = [])
+    public function stream($callback = null, int $status = 200, array $headers = []): StreamedResponse
     {
         return new StreamedResponse($callback, $status, $headers);
     }
@@ -394,13 +398,18 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      * Escapes a text for HTML.
      *
      * @param string $text         The input text to be escaped
-     * @param int    $flags        The flags (@see htmlspecialchars)
-     * @param string $charset      The charset
-     * @param bool   $doubleEncode Whether to try to avoid double escaping or not
+     * @param int $flags        The flags (@see htmlspecialchars)
+     * @param string|null $charset      The charset
+     * @param bool $doubleEncode Whether to try to avoid double escaping or not
      *
      * @return string Escaped text
      */
-    public function escape($text, $flags = ENT_COMPAT, $charset = null, $doubleEncode = true)
+    public function escape(
+        string $text,
+        int $flags = ENT_COMPAT,
+        string $charset = null,
+        bool $doubleEncode = true
+    ): string
     {
         return htmlspecialchars($text, $flags, $charset ?: $this['charset'], $doubleEncode);
     }
@@ -409,12 +418,12 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      * Convert some data into a JSON response.
      *
      * @param mixed $data    The response data
-     * @param int   $status  The response status code
+     * @param int $status  The response status code
      * @param array $headers An array of response headers
      *
      * @return JsonResponse
      */
-    public function json($data = [], $status = 200, array $headers = [])
+    public function json($data = [], int $status = 200, array $headers = []): JsonResponse
     {
         return new JsonResponse($data, $status, $headers);
     }
@@ -422,14 +431,14 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
     /**
      * Sends a file.
      *
-     * @param \SplFileInfo|string $file               The file to stream
-     * @param int                 $status             The response status code
+     * @param SplFileInfo|string $file               The file to stream
+     * @param int $status             The response status code
      * @param array               $headers            An array of response headers
-     * @param null|string         $contentDisposition The type of Content-Disposition to set automatically with the filename
+     * @param string|null $contentDisposition The type of Content-Disposition to set automatically with the filename
      *
      * @return BinaryFileResponse
      */
-    public function sendFile($file, $status = 200, array $headers = [], $contentDisposition = null)
+    public function sendFile($file, int $status = 200, array $headers = [], string $contentDisposition = null): BinaryFileResponse
     {
         return new BinaryFileResponse($file, $status, $headers, true, $contentDisposition);
     }
@@ -437,25 +446,25 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
     /**
      * Mounts controllers under the given route prefix.
      *
-     * @param string                                                    $prefix      The route prefix
+     * @param string $prefix      The route prefix
      * @param ControllerCollection|callable|ControllerProviderInterface $controllers A ControllerCollection, a callable, or a ControllerProviderInterface instance
      *
      * @return Application
      *
-     * @throws \LogicException
+     * @throws LogicException
      */
-    public function mount($prefix, $controllers)
+    public function mount(string $prefix, $controllers): Application
     {
         if ($controllers instanceof ControllerProviderInterface) {
             $connectedControllers = $controllers->connect($this);
 
             if (!$connectedControllers instanceof ControllerCollection) {
-                throw new \LogicException(sprintf('The method "%s::connect" must return a "ControllerCollection" instance. Got: "%s"', get_class($controllers), is_object($connectedControllers) ? get_class($connectedControllers) : gettype($connectedControllers)));
+                throw new LogicException(sprintf('The method "%s::connect" must return a "ControllerCollection" instance. Got: "%s"', get_class($controllers), is_object($connectedControllers) ? get_class($connectedControllers) : gettype($connectedControllers)));
             }
 
             $controllers = $connectedControllers;
         } elseif (!$controllers instanceof ControllerCollection && !is_callable($controllers)) {
-            throw new \LogicException('The "mount" method takes either a "ControllerCollection" instance, "ControllerProviderInterface" instance, or a callable.');
+            throw new LogicException('The "mount" method takes either a "ControllerCollection" instance, "ControllerProviderInterface" instance, or a callable.');
         }
 
         $this['controllers']->mount($prefix, $controllers);
@@ -467,6 +476,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      * Handles the request and delivers the response.
      *
      * @param Request|null $request Request to process
+     * @throws Exception
      */
     public function run(Request $request = null)
     {
