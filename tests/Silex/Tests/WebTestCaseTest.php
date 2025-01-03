@@ -22,7 +22,7 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class WebTestCaseTest extends WebTestCase
 {
-    public function createApplication()
+    public function createApplication(): Application
     {
         $app = new Application();
 

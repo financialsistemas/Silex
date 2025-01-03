@@ -11,15 +11,18 @@
 
 namespace Silex\Tests\Provider;
 
+use Exception;
+use LogicException;
 use Silex\Application;
 use Silex\WebTestCase;
 use Silex\Provider\SecurityServiceProvider;
 use Silex\Provider\SessionServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
+use Symfony\Component\HttpKernel\HttpKernelInterface;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
-use Symfony\Component\HttpKernel\Client;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\HttpKernelBrowser;
 
 /**
  * SecurityServiceProvider.
@@ -29,10 +32,12 @@ use Symfony\Component\HttpFoundation\Request;
 class SecurityServiceProviderTest extends WebTestCase
 {
     /**
-     * @expectedException \LogicException
+     * @throws Exception
      */
     public function testWrongAuthenticationType()
     {
+        $this->expectException(LogicException::class);
+
         $app = new Application();
         $app->register(new SecurityServiceProvider(), [
             'security.firewalls' => [
@@ -48,15 +53,15 @@ class SecurityServiceProviderTest extends WebTestCase
 
     public function testFormAuthentication()
     {
-        $app = $this->createApplication('form');
+        $app = $this->createApplication();
 
-        $client = new Client($app);
+        $client = new HttpKernelBrowser($app);
 
         $client->request('get', '/');
         $this->assertEquals('ANONYMOUS', $client->getResponse()->getContent());
 
         $client->request('post', '/login_check', ['_username' => 'fabien', '_password' => 'bar']);
-        $this->assertContains('Bad credentials', $app['security.last_error']($client->getRequest()));
+        $this->assertStringContainsString('Bad credentials', $app['security.last_error']($client->getRequest()));
         // hack to re-close the session as the previous assertions re-opens it
         $client->getRequest()->getSession()->save();
 
@@ -98,7 +103,7 @@ class SecurityServiceProviderTest extends WebTestCase
     {
         $app = $this->createApplication('http');
 
-        $client = new Client($app);
+        $client = new HttpKernelBrowser($app);
 
         $client->request('get', '/');
         $this->assertEquals(401, $client->getResponse()->getStatusCode());
@@ -125,7 +130,7 @@ class SecurityServiceProviderTest extends WebTestCase
     {
         $app = $this->createApplication('guard');
 
-        $client = new Client($app);
+        $client = new HttpKernelBrowser($app);
 
         $client->request('get', '/');
         $this->assertEquals(401, $client->getResponse()->getStatusCode(), 'The entry point is configured');
@@ -167,10 +172,10 @@ class SecurityServiceProviderTest extends WebTestCase
 
     public function testExposedExceptions()
     {
-        $app = $this->createApplication('form');
+        $app = $this->createApplication();
         $app['security.hide_user_not_found'] = false;
 
-        $client = new Client($app);
+        $client = new HttpKernelBrowser($app);
 
         $client->request('get', '/');
         $this->assertEquals('ANONYMOUS', $client->getResponse()->getContent());
@@ -209,6 +214,9 @@ class SecurityServiceProviderTest extends WebTestCase
         $this->assertCount(1, unserialize(serialize($app['routes'])));
     }
 
+    /**
+     * @throws Exception
+     */
     public function testFirewallWithMethod()
     {
         $app = new Application();
@@ -224,7 +232,7 @@ class SecurityServiceProviderTest extends WebTestCase
         $app->match('/', function () { return 'foo'; })
         ->method('POST|GET');
 
-        $request = Request::create('/', 'GET');
+        $request = Request::create('/');
         $response = $app->handle($request);
         $this->assertEquals(200, $response->getStatusCode());
 
@@ -233,6 +241,9 @@ class SecurityServiceProviderTest extends WebTestCase
         $this->assertEquals(401, $response->getStatusCode());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testFirewallWithHost()
     {
         $app = new Application();
@@ -260,6 +271,9 @@ class SecurityServiceProviderTest extends WebTestCase
         $this->assertEquals(200, $response->getStatusCode());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testUser()
     {
         $app = new Application();
@@ -286,6 +300,9 @@ class SecurityServiceProviderTest extends WebTestCase
         $this->assertEquals('fabien', $app['user']->getUsername());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testUserAsServiceString()
     {
         $users = [
@@ -316,6 +333,9 @@ class SecurityServiceProviderTest extends WebTestCase
         $this->assertEquals('fabien', $app['user']->getUsername());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testUserWithNoToken()
     {
         $app = new Application();
@@ -334,6 +354,9 @@ class SecurityServiceProviderTest extends WebTestCase
         $this->assertNull($app['user']);
     }
 
+    /**
+     * @throws Exception
+     */
     public function testUserWithInvalidUser()
     {
         $app = new Application();
@@ -379,7 +402,7 @@ class SecurityServiceProviderTest extends WebTestCase
         ]);
     }
 
-    public function createApplication($authenticationMethod = 'form')
+    public function createApplication($authenticationMethod = 'form'): HttpKernelInterface
     {
         $app = new Application();
         $app->register(new SessionServiceProvider());
@@ -496,7 +519,7 @@ class SecurityServiceProviderTest extends WebTestCase
     private function addGuardAuthentication($app)
     {
         $app['app.authenticator.token'] = function ($app) {
-            return new SecurityServiceProviderTest\TokenAuthenticator($app);
+            return new SecurityServiceProviderTest\TokenAuthenticator();
         };
 
         $app->register(new SecurityServiceProvider(), [
@@ -519,9 +542,7 @@ class SecurityServiceProviderTest extends WebTestCase
         $app->get('/', function () use ($app) {
             $user = $app['security.token_storage']->getToken()->getUser();
 
-            $content = is_object($user) ? $user->getUsername() : 'ANONYMOUS';
-
-            return $content;
+            return is_object($user) ? $user->getUsername() : 'ANONYMOUS';
         })->bind('homepage');
 
         return $app;

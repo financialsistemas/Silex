@@ -29,7 +29,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
  */
 class ValidatorServiceProviderTest extends TestCase
 {
-    public function testRegister()
+    public function createApplication(): Application
     {
         $app = new Application();
         $app->register(new ValidatorServiceProvider());
@@ -38,7 +38,7 @@ class ValidatorServiceProviderTest extends TestCase
         return $app;
     }
 
-    public function testRegisterWithCustomValidators()
+    public function createApplicationWithCustomValidators(): Application
     {
         $app = new Application();
 
@@ -55,32 +55,29 @@ class ValidatorServiceProviderTest extends TestCase
         return $app;
     }
 
-    /**
-     * @depends testRegisterWithCustomValidators
-     */
-    public function testConstraintValidatorFactory($app)
+    public function testConstraintValidatorFactory()
     {
+        $app = $this->createApplicationWithCustomValidators();
+
         $this->assertInstanceOf('Silex\Provider\Validator\ConstraintValidatorFactory', $app['validator.validator_factory']);
 
         $validator = $app['validator.validator_factory']->getInstance(new Custom());
         $this->assertInstanceOf('Silex\Tests\Provider\ValidatorServiceProviderTest\Constraint\CustomValidator', $validator);
     }
 
-    /**
-     * @depends testRegister
-     */
-    public function testConstraintValidatorFactoryWithExpression($app)
+    public function testConstraintValidatorFactoryWithExpression()
     {
+        $app = $this->createApplication();
+
         $constraint = new Assert\Expression('true');
         $validator = $app['validator.validator_factory']->getInstance($constraint);
         $this->assertInstanceOf('Symfony\Component\Validator\Constraints\ExpressionValidator', $validator);
     }
 
-    /**
-     * @depends testRegister
-     */
-    public function testValidatorServiceIsAValidator($app)
+    public function testValidatorServiceIsAValidator()
     {
+        $app = $this->createApplication();
+
         $this->assertTrue($app['validator'] instanceof ValidatorInterface);
     }
 
@@ -88,8 +85,10 @@ class ValidatorServiceProviderTest extends TestCase
      * @depends testRegister
      * @dataProvider getTestValidatorConstraintProvider
      */
-    public function testValidatorConstraint($email, $isValid, $nbGlobalError, $nbEmailError, $app)
+    public function testValidatorConstraint($email, $isValid, $nbGlobalError, $nbEmailError)
     {
+        $app = $this->createApplication();
+
         $constraints = new Assert\Collection([
             'email' => [
                 new Assert\NotBlank(),
@@ -135,7 +134,7 @@ class ValidatorServiceProviderTest extends TestCase
         }
     }
 
-    public function getTestValidatorConstraintProvider()
+    public function getTestValidatorConstraintProvider(): array
     {
         // Email, form is valid, nb global error, nb email error
         return [
@@ -168,7 +167,7 @@ class ValidatorServiceProviderTest extends TestCase
         $this->assertEquals('Pas vide', $app['translator']->trans('This value should not be blank.', [], 'validators', 'fr'));
     }
 
-    public function getAddResourceData()
+    public function getAddResourceData(): array
     {
         return [[false], [true]];
     }
@@ -181,11 +180,9 @@ class ValidatorServiceProviderTest extends TestCase
         $app->register(new ValidatorServiceProvider());
         $app->register(new TranslationServiceProvider());
         $app->factory($app->extend('translator.resources', function ($resources, $app) {
-            $resources = array_merge($resources, [
+            return array_merge($resources, [
                 ['array', ['This value should not be blank.' => 'Pas vide'], 'fr', 'validators'],
             ]);
-
-            return $resources;
         }));
 
         $app['validator'];
@@ -201,6 +198,6 @@ class ValidatorServiceProviderTest extends TestCase
         $app->register(new ValidatorServiceProvider());
         $app->register(new TranslationServiceProvider());
 
-        $this->assertInternalType('array', $app['translator.resources']);
+        $this->assertIsArray('array', $app['translator.resources']);
     }
 }

@@ -66,7 +66,7 @@ class SecurityTraitTest extends TestCase
         $this->assertEquals(403, $response->getStatusCode());
     }
 
-    private function createApplication()
+    private function createApplication(): Application
     {
         $app = new Application();
         $app['route_class'] = 'Silex\Tests\Route\SecurityRoute';

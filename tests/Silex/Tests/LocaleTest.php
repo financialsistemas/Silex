@@ -11,6 +11,7 @@
 
 namespace Silex\Tests;
 
+use Exception;
 use PHPUnit\Framework\TestCase;
 use Silex\Application;
 use Silex\Provider\LocaleServiceProvider;
@@ -24,6 +25,9 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  */
 class LocaleTest extends TestCase
 {
+    /**
+     * @throws Exception
+     */
     public function testLocale()
     {
         $app = new Application();
@@ -46,6 +50,9 @@ class LocaleTest extends TestCase
         $this->assertEquals('es', $response->getContent());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testLocaleInSubRequests()
     {
         $app = new Application();
@@ -68,6 +75,9 @@ class LocaleTest extends TestCase
         $this->assertEquals('frenfr', $response->getContent());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testLocaleWithBefore()
     {
         $app = new Application();

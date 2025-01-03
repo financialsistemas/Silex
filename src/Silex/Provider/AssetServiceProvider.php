@@ -11,13 +11,13 @@
 
 namespace Silex\Provider;
 
+use LogicException;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
+use Symfony\Component\Asset\Context\RequestStackContext;
 use Symfony\Component\Asset\Packages;
-use Symfony\Component\Asset\Package;
 use Symfony\Component\Asset\PathPackage;
 use Symfony\Component\Asset\UrlPackage;
-use Symfony\Component\Asset\Context\RequestStackContext;
 use Symfony\Component\Asset\VersionStrategy\EmptyVersionStrategy;
 use Symfony\Component\Asset\VersionStrategy\JsonManifestVersionStrategy;
 use Symfony\Component\Asset\VersionStrategy\StaticVersionStrategy;
@@ -34,9 +34,9 @@ class AssetServiceProvider implements ServiceProviderInterface
         $app['assets.packages'] = function ($app) {
             $packages = [];
             foreach ($app['assets.named_packages'] as $name => $package) {
-                $version = $app['assets.strategy_factory'](isset($package['version']) ? $package['version'] : null, isset($package['version_format']) ? $package['version_format'] : null, isset($package['json_manifest_path']) ? $package['json_manifest_path'] : null, $name);
+                $version = $app['assets.strategy_factory']($package['version'] ?? null, $package['version_format'] ?? null, $package['json_manifest_path'] ?? null, $name);
 
-                $packages[$name] = $app['assets.package_factory'](isset($package['base_path']) ? $package['base_path'] : '', isset($package['base_urls']) ? $package['base_urls'] : [], $version, $name);
+                $packages[$name] = $app['assets.package_factory']($package['base_path'] ?? '', $package['base_urls'] ?? [], $version, $name);
             }
 
             return new Packages($app['assets.default_package'], $packages);
@@ -64,7 +64,7 @@ class AssetServiceProvider implements ServiceProviderInterface
 
         $app['assets.strategy_factory'] = $app->protect(function ($version, $format, $jsonManifestPath, $name) use ($app) {
             if ($version && $jsonManifestPath) {
-                throw new \LogicException(sprintf('Asset package "%s" cannot have version and manifest.', $name));
+                throw new LogicException(sprintf('Asset package "%s" cannot have version and manifest.', $name));
             }
 
             if ($version) {
@@ -80,7 +80,7 @@ class AssetServiceProvider implements ServiceProviderInterface
 
         $app['assets.package_factory'] = $app->protect(function ($basePath, $baseUrls, $version, $name) use ($app) {
             if ($basePath && $baseUrls) {
-                throw new \LogicException(sprintf('Asset package "%s" cannot have base URLs and base paths.', $name));
+                throw new LogicException(sprintf('Asset package "%s" cannot have base URLs and base paths.', $name));
             }
 
             if (!$baseUrls) {

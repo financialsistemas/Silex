@@ -11,12 +11,16 @@
 
 namespace Silex\Tests\Provider;
 
+use Exception;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
+use RuntimeException;
 use Silex\Application;
 use Silex\Provider\MonologServiceProvider;
+use Silex\Provider\SecurityServiceProvider;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -30,17 +34,20 @@ class MonologServiceProviderTest extends TestCase
 {
     private $currErrorHandler;
 
-    protected function setUp()
+    protected function setUp(): void
     {
         $this->currErrorHandler = set_error_handler('var_dump');
         restore_error_handler();
     }
 
-    protected function tearDown()
+    protected function tearDown(): void
     {
         set_error_handler($this->currErrorHandler);
     }
 
+    /**
+     * @throws Exception
+     */
     public function testRequestLogging()
     {
         $app = $this->getApplication();
@@ -58,10 +65,13 @@ class MonologServiceProviderTest extends TestCase
         $this->assertTrue($app['monolog.handler']->hasDebug('< 200'));
 
         $records = $app['monolog.handler']->getRecords();
-        $this->assertContains('Matched route "{route}".', $records[0]['message']);
+        $this->assertStringContainsString('Matched route "{route}".', $records[0]['message']);
         $this->assertSame('GET_foo', $records[0]['context']['route']);
     }
 
+    /**
+     * @throws Exception
+     */
     public function testManualLogging()
     {
         $app = $this->getApplication();
@@ -90,11 +100,14 @@ class MonologServiceProviderTest extends TestCase
         $this->assertInstanceOf('Monolog\Formatter\JsonFormatter', $app['monolog.handler']->getFormatter());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testErrorLogging()
     {
         $app = $this->getApplication();
 
-        $app->error(function (\Exception $e) {
+        $app->error(function (Exception $e) {
             return 'error handled';
         });
 
@@ -113,7 +126,7 @@ class MonologServiceProviderTest extends TestCase
          * Simulate unhandled exception, logged to critical
          */
         $app->get('/error', function () {
-            throw new \RuntimeException('very bad error');
+            throw new RuntimeException('very bad error');
         });
 
         $this->assertFalse($app['monolog.handler']->hasCriticalRecords());
@@ -125,6 +138,9 @@ class MonologServiceProviderTest extends TestCase
         $this->assertMatchingRecord($pattern, Logger::CRITICAL, $app['monolog.handler']);
     }
 
+    /**
+     * @throws Exception
+     */
     public function testRedirectLogging()
     {
         $app = $this->getApplication();
@@ -141,12 +157,15 @@ class MonologServiceProviderTest extends TestCase
         $this->assertTrue($app['monolog.handler']->hasDebug('< 302 /bar'));
     }
 
+    /**
+     * @throws Exception
+     */
     public function testErrorLoggingGivesWayToSecurityExceptionHandling()
     {
         $app = $this->getApplication();
         $app['monolog.level'] = Logger::ERROR;
 
-        $app->register(new \Silex\Provider\SecurityServiceProvider(), [
+        $app->register(new SecurityServiceProvider(), [
             'security.firewalls' => [
                 'admin' => [
                     'pattern' => '^/admin',
@@ -174,18 +193,20 @@ class MonologServiceProviderTest extends TestCase
         $this->assertSame(Logger::INFO, $app['monolog.handler']->getLevel());
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     * @expectedExceptionMessage Provided logging level 'foo' does not exist. Must be a valid monolog logging level.
-     */
     public function testNonExistentStringErrorLevel()
     {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Provided logging level 'foo' does not exist. Must be a valid monolog logging level.");
+
         $app = $this->getApplication();
         $app['monolog.level'] = 'foo';
 
         $app['monolog.handler']->getLevel();
     }
 
+    /**
+     * @throws Exception
+     */
     public function testDisableListener()
     {
         $app = $this->getApplication();
@@ -196,6 +217,9 @@ class MonologServiceProviderTest extends TestCase
         $this->assertEmpty($app['monolog.handler']->getRecords(), 'Expected no logging to occur');
     }
 
+    /**
+     * @throws Exception
+     */
     public function testExceptionFiltering()
     {
         $app = new Application();
@@ -228,13 +252,12 @@ class MonologServiceProviderTest extends TestCase
         foreach ($records as $record) {
             if (preg_match($pattern, $record['message']) && $record['level'] == $level) {
                 $found = true;
-                continue;
             }
         }
         $this->assertTrue($found, "Trying to find record matching $pattern with level $level");
     }
 
-    protected function getApplication()
+    protected function getApplication(): Application
     {
         $app = new Application();
 

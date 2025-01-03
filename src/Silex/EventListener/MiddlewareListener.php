@@ -11,9 +11,10 @@
 
 namespace Silex\EventListener;
 
+use RuntimeException;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
-use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Silex\Application;
@@ -40,9 +41,9 @@ class MiddlewareListener implements EventSubscriberInterface
     /**
      * Runs before filters.
      *
-     * @param GetResponseEvent $event The event to handle
+     * @param RequestEvent $event The event to handle
      */
-    public function onKernelRequest(GetResponseEvent $event)
+    public function onKernelRequest(RequestEvent $event)
     {
         $request = $event->getRequest();
         $routeName = $request->attributes->get('_route');
@@ -57,7 +58,7 @@ class MiddlewareListener implements EventSubscriberInterface
 
                 return;
             } elseif (null !== $ret) {
-                throw new \RuntimeException(sprintf('A before middleware for route "%s" returned an invalid response value. Must return null or an instance of Response.', $routeName));
+                throw new RuntimeException(sprintf('A before middleware for route "%s" returned an invalid response value. Must return null or an instance of Response.', $routeName));
             }
         }
     }
@@ -65,9 +66,9 @@ class MiddlewareListener implements EventSubscriberInterface
     /**
      * Runs after filters.
      *
-     * @param FilterResponseEvent $event The event to handle
+     * @param ResponseEvent $event The event to handle
      */
-    public function onKernelResponse(FilterResponseEvent $event)
+    public function onKernelResponse(ResponseEvent $event)
     {
         $request = $event->getRequest();
         $routeName = $request->attributes->get('_route');
@@ -80,12 +81,12 @@ class MiddlewareListener implements EventSubscriberInterface
             if ($response instanceof Response) {
                 $event->setResponse($response);
             } elseif (null !== $response) {
-                throw new \RuntimeException(sprintf('An after middleware for route "%s" returned an invalid response value. Must return null or an instance of Response.', $routeName));
+                throw new RuntimeException(sprintf('An after middleware for route "%s" returned an invalid response value. Must return null or an instance of Response.', $routeName));
             }
         }
     }
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             // this must be executed after the late events defined with before() (and their priority is -512)

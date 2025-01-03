@@ -11,12 +11,15 @@
 
 namespace Silex\Tests\EventListener;
 
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
+use RuntimeException;
 use Silex\EventListener\LogListener;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
-use Symfony\Component\HttpKernel\Event\FilterResponseEvent;
-use Symfony\Component\HttpKernel\Event\GetResponseForExceptionEvent;
+use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
+use Symfony\Component\HttpKernel\Event\ResponseEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\Request;
@@ -33,62 +36,65 @@ class LogListenerTest extends TestCase
 {
     public function testRequestListener()
     {
+        /** @var LoggerInterface&MockObject $logger */
         $logger = $this->getMockBuilder('Psr\\Log\\LoggerInterface')->getMock();
         $logger
             ->expects($this->once())
             ->method('log')
-            ->with(LogLevel::DEBUG, '> GET /foo')
-        ;
+            ->with(LogLevel::DEBUG, '> GET /foo');
 
         $dispatcher = new EventDispatcher();
         $dispatcher->addSubscriber(new LogListener($logger));
 
+        /** @var HttpKernelInterface&MockObject $kernel */
         $kernel = $this->getMockBuilder('Symfony\\Component\\HttpKernel\\HttpKernelInterface')->getMock();
 
-        $dispatcher->dispatch(KernelEvents::REQUEST, new GetResponseEvent($kernel, Request::create('/subrequest'), HttpKernelInterface::SUB_REQUEST), 'Skip sub requests');
+        $dispatcher->dispatch(new RequestEvent($kernel, Request::create('/subrequest'), HttpKernelInterface::SUB_REQUEST), KernelEvents::REQUEST, 'Skip sub requests');
 
-        $dispatcher->dispatch(KernelEvents::REQUEST, new GetResponseEvent($kernel, Request::create('/foo'), HttpKernelInterface::MASTER_REQUEST), 'Log master requests');
+        $dispatcher->dispatch(new RequestEvent($kernel, Request::create('/foo'), HttpKernelInterface::MASTER_REQUEST), KernelEvents::REQUEST, 'Log master requests');
     }
 
     public function testResponseListener()
     {
+        /** @var LoggerInterface&MockObject $logger */
         $logger = $this->getMockBuilder('Psr\\Log\\LoggerInterface')->getMock();
         $logger
             ->expects($this->once())
             ->method('log')
-            ->with(LogLevel::DEBUG, '< 301')
-        ;
+            ->with(LogLevel::DEBUG, '< 301');
 
         $dispatcher = new EventDispatcher();
         $dispatcher->addSubscriber(new LogListener($logger));
 
+        /** @var HttpKernelInterface&MockObject $kernel */
         $kernel = $this->getMockBuilder('Symfony\\Component\\HttpKernel\\HttpKernelInterface')->getMock();
 
-        $dispatcher->dispatch(KernelEvents::RESPONSE, new FilterResponseEvent($kernel, Request::create('/foo'), HttpKernelInterface::SUB_REQUEST, Response::create('subrequest', 200)), 'Skip sub requests');
+        $dispatcher->dispatch(new ResponseEvent($kernel, Request::create('/foo'), HttpKernelInterface::SUB_REQUEST, Response::create('subrequest')), KernelEvents::RESPONSE, 'Skip sub requests');
 
-        $dispatcher->dispatch(KernelEvents::RESPONSE, new FilterResponseEvent($kernel, Request::create('/foo'), HttpKernelInterface::MASTER_REQUEST, Response::create('bar', 301)), 'Log master requests');
+        $dispatcher->dispatch(new ResponseEvent($kernel, Request::create('/foo'), HttpKernelInterface::MASTER_REQUEST, Response::create('bar', 301)), KernelEvents::RESPONSE, 'Log master requests');
     }
 
     public function testExceptionListener()
     {
+        /** @var LoggerInterface&MockObject $logger */
         $logger = $this->getMockBuilder('Psr\\Log\\LoggerInterface')->getMock();
         $logger
-            ->expects($this->at(0))
+            ->expects($this->exactly(2))
             ->method('log')
-            ->with(LogLevel::CRITICAL, 'RuntimeException: Fatal error (uncaught exception) at '.__FILE__.' line '.(__LINE__ + 13))
-        ;
-        $logger
-            ->expects($this->at(1))
-            ->method('log')
-            ->with(LogLevel::ERROR, 'Symfony\Component\HttpKernel\Exception\HttpException: Http error (uncaught exception) at '.__FILE__.' line '.(__LINE__ + 9))
-        ;
+            ->with(
+                $this->logicalOr(
+                    $this->equalTo([LogLevel::CRITICAL, 'RuntimeException: Fatal error (uncaught exception) at '.__FILE__.' line '.(__LINE__ + 11)]),
+                    $this->equalTo([LogLevel::ERROR, 'Symfony\Component\HttpKernel\Exception\HttpException: Http error (uncaught exception) at '.__FILE__.' line '.(__LINE__ + 11)])
+                )
+            );
 
         $dispatcher = new EventDispatcher();
         $dispatcher->addSubscriber(new LogListener($logger));
 
+        /** @var HttpKernelInterface&MockObject $kernel */
         $kernel = $this->getMockBuilder('Symfony\\Component\\HttpKernel\\HttpKernelInterface')->getMock();
 
-        $dispatcher->dispatch(KernelEvents::EXCEPTION, new GetResponseForExceptionEvent($kernel, Request::create('/foo'), HttpKernelInterface::SUB_REQUEST, new \RuntimeException('Fatal error')));
-        $dispatcher->dispatch(KernelEvents::EXCEPTION, new GetResponseForExceptionEvent($kernel, Request::create('/foo'), HttpKernelInterface::SUB_REQUEST, new HttpException(400, 'Http error')));
+        $dispatcher->dispatch(new ExceptionEvent($kernel, Request::create('/foo'), HttpKernelInterface::SUB_REQUEST, new RuntimeException('Fatal error')), KernelEvents::EXCEPTION);
+        $dispatcher->dispatch(new ExceptionEvent($kernel, Request::create('/foo'), HttpKernelInterface::SUB_REQUEST, new HttpException(400, 'Http error')), KernelEvents::EXCEPTION);
     }
 }

@@ -24,28 +24,12 @@ trait TranslationTrait
      * @param string $id         The message id
      * @param array  $parameters An array of parameters for the message
      * @param string $domain     The domain for the message
-     * @param string $locale     The locale
+     * @param string|null $locale     The locale
      *
      * @return string The translated string
      */
-    public function trans($id, array $parameters = [], $domain = 'messages', $locale = null)
+    public function trans(string $id, array $parameters = [], string $domain = 'messages', string $locale = null): string
     {
         return $this['translator']->trans($id, $parameters, $domain, $locale);
-    }
-
-    /**
-     * Translates the given choice message by choosing a translation according to a number.
-     *
-     * @param string $id         The message id
-     * @param int    $number     The number to use to find the indice of the message
-     * @param array  $parameters An array of parameters for the message
-     * @param string $domain     The domain for the message
-     * @param string $locale     The locale
-     *
-     * @return string The translated string
-     */
-    public function transChoice($id, $number, array $parameters = [], $domain = 'messages', $locale = null)
-    {
-        return $this['translator']->transChoice($id, $number, $parameters, $domain, $locale);
     }
 }

@@ -11,16 +11,19 @@
 
 namespace Silex\Tests;
 
+use ArrayObject;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use Pimple\Container;
 use Silex\CallbackResolver;
+use stdClass;
 
 class CallbackResolverTest extends Testcase
 {
     private $app;
     private $resolver;
 
-    public function setup()
+    public function setup(): void
     {
         $this->app = new Container();
         $this->resolver = new CallbackResolver($this->app);
@@ -29,7 +32,7 @@ class CallbackResolverTest extends Testcase
     public function testShouldResolveCallback()
     {
         $callable = function () {};
-        $this->app['some_service'] = function () { return new \ArrayObject(); };
+        $this->app['some_service'] = function () { return new ArrayObject(); };
         $this->app['callable_service'] = function () use ($callable) {
             return $callable;
         };
@@ -51,7 +54,7 @@ class CallbackResolverTest extends Testcase
         $this->assertFalse($this->resolver->isValid($name));
     }
 
-    public function nonStringsAreNotValidProvider()
+    public function nonStringsAreNotValidProvider(): array
     {
         return [
             [null],
@@ -61,18 +64,19 @@ class CallbackResolverTest extends Testcase
     }
 
     /**
-     * @expectedException          \InvalidArgumentException
-     * @expectedExceptionMessageRegExp  /Service "[a-z_]+" is not callable./
      * @dataProvider shouldThrowAnExceptionIfServiceIsNotCallableProvider
      */
     public function testShouldThrowAnExceptionIfServiceIsNotCallable($name)
     {
-        $this->app['non_callable_obj'] = function () { return new \stdClass(); };
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/Service "[a-z_]+" is not callable./');
+
+        $this->app['non_callable_obj'] = function () { return new stdClass(); };
         $this->app['non_callable'] = function () { return []; };
         $this->resolver->convertCallback($name);
     }
 
-    public function shouldThrowAnExceptionIfServiceIsNotCallableProvider()
+    public function shouldThrowAnExceptionIfServiceIsNotCallableProvider(): array
     {
         return [
             ['non_callable_obj:methodA'],

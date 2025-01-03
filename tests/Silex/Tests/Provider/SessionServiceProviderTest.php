@@ -12,10 +12,10 @@
 namespace Silex\Tests\Provider;
 
 use Silex\Application;
-use Silex\WebTestCase;
 use Silex\Provider\SessionServiceProvider;
-use Symfony\Component\HttpKernel\Client;
+use Silex\WebTestCase;
 use Symfony\Component\HttpFoundation\Session;
+use Symfony\Component\HttpKernel\HttpKernelBrowser;
 
 /**
  * SessionProvider test cases.
@@ -42,7 +42,7 @@ class SessionServiceProviderTest extends WebTestCase
         $this->assertEquals('You are not logged in.', $client->getResponse()->getContent());
     }
 
-    public function createApplication()
+    public function createApplication(): Application
     {
         $app = new Application();
 
@@ -92,7 +92,7 @@ class SessionServiceProviderTest extends WebTestCase
         $app['debug'] = true;
         unset($app['exception_handler']);
 
-        $client = new Client($app);
+        $client = new HttpKernelBrowser($app);
 
         $client->request('get', '/');
         $this->assertEquals('A welcome page.', $client->getResponse()->getContent());

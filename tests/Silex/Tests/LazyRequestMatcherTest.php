@@ -11,6 +11,7 @@
 
 namespace Silex\Tests;
 
+use LogicException;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Silex\Provider\Routing\LazyRequestMatcher;
@@ -42,12 +43,11 @@ class LazyRequestMatcherTest extends TestCase
         $this->assertEquals(1, $callCounter);
     }
 
-    /**
-     * @expectedException \LogicException
-     * @expectedExceptionMessage Factory supplied to LazyRequestMatcher must return implementation of Symfony\Component\Routing\RequestMatcherInterface.
-     */
     public function testThatCanInjectRequestMatcherOnly()
     {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage("Factory supplied to LazyRequestMatcher must return implementation of Symfony\Component\Routing\RequestMatcherInterface.");
+
         $matcher = new LazyRequestMatcher(function () {
             return 'someMatcher';
         });

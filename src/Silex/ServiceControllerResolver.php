@@ -50,9 +50,6 @@ class ServiceControllerResolver implements ControllerResolverInterface
         return $this->callbackResolver->convertCallback($controller);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getArguments(Request $request, $controller)
     {
         return $this->controllerResolver->getArguments($request, $controller);

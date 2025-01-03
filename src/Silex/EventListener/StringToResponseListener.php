@@ -12,7 +12,7 @@
 namespace Silex\EventListener;
 
 use Symfony\Component\HttpKernel\KernelEvents;
-use Symfony\Component\HttpKernel\Event\GetResponseForControllerResultEvent;
+use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -26,9 +26,9 @@ class StringToResponseListener implements EventSubscriberInterface
     /**
      * Handles string responses.
      *
-     * @param GetResponseForControllerResultEvent $event The event to handle
+     * @param ViewEvent $event The event to handle
      */
-    public function onKernelView(GetResponseForControllerResultEvent $event)
+    public function onKernelView(ViewEvent $event)
     {
         $response = $event->getControllerResult();
 
@@ -42,7 +42,7 @@ class StringToResponseListener implements EventSubscriberInterface
         }
     }
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             KernelEvents::VIEW => ['onKernelView', -10],

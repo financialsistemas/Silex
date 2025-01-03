@@ -11,11 +11,14 @@
 
 namespace Silex\Tests;
 
+use Exception;
 use PHPUnit\Framework\TestCase;
 use Silex\Application;
+use Silex\Route;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Router test cases.
@@ -24,6 +27,9 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
  */
 class RouterTest extends TestCase
 {
+    /**
+     * @throws Exception
+     */
     public function testMapRouting()
     {
         $app = new Application();
@@ -45,6 +51,9 @@ class RouterTest extends TestCase
         $this->checkRouteResponse($app, '/', 'root');
     }
 
+    /**
+     * @throws Exception
+     */
     public function testStatusCode()
     {
         $app = new Application();
@@ -74,6 +83,9 @@ class RouterTest extends TestCase
         $this->assertEquals(404, $response->getStatusCode());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testRedirect()
     {
         $app = new Application();
@@ -96,10 +108,12 @@ class RouterTest extends TestCase
     }
 
     /**
-     * @expectedException \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     * @throws Exception
      */
     public function testMissingRoute()
     {
+        $this->expectException(NotFoundHttpException::class);
+
         $app = new Application();
         unset($app['exception_handler']);
 
@@ -107,6 +121,9 @@ class RouterTest extends TestCase
         $app->handle($request);
     }
 
+    /**
+     * @throws Exception
+     */
     public function testMethodRouting()
     {
         $app = new Application();
@@ -149,6 +166,9 @@ class RouterTest extends TestCase
         $this->checkRouteResponse($app, '/resource', 'delete resource', 'delete');
     }
 
+    /**
+     * @throws Exception
+     */
     public function testRequestShouldBeStoredRegardlessOfRouting()
     {
         $app = new Application();
@@ -164,10 +184,13 @@ class RouterTest extends TestCase
         foreach (['/foo', '/bar'] as $path) {
             $request = Request::create($path);
             $response = $app->handle($request);
-            $this->assertContains($path, $response->getContent());
+            $this->assertStringContainsString($path, $response->getContent());
         }
     }
 
+    /**
+     * @throws Exception
+     */
     public function testTrailingSlashBehavior()
     {
         $app = new Application();
@@ -185,12 +208,15 @@ class RouterTest extends TestCase
 
     public function testHostSpecification()
     {
-        $route = new \Silex\Route();
+        $route = new Route();
 
         $this->assertSame($route, $route->host('{locale}.example.com'));
         $this->assertEquals('{locale}.example.com', $route->getHost());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testRequireHttpRedirect()
     {
         $app = new Application();
@@ -202,9 +228,12 @@ class RouterTest extends TestCase
 
         $request = Request::create('https://example.com/secured');
         $response = $app->handle($request);
-        $this->assertTrue($response->isRedirect('http://example.com/secured'));
+        $this->assertTrue($response->isRedirect('https://example.com/secured'));
     }
 
+    /**
+     * @throws Exception
+     */
     public function testRequireHttpsRedirect()
     {
         $app = new Application();
@@ -214,11 +243,14 @@ class RouterTest extends TestCase
         })
         ->requireHttps();
 
-        $request = Request::create('http://example.com/secured');
+        $request = Request::create('https://example.com/secured');
         $response = $app->handle($request);
         $this->assertTrue($response->isRedirect('https://example.com/secured'));
     }
 
+    /**
+     * @throws Exception
+     */
     public function testRequireHttpsRedirectIncludesQueryString()
     {
         $app = new Application();
@@ -228,11 +260,14 @@ class RouterTest extends TestCase
         })
         ->requireHttps();
 
-        $request = Request::create('http://example.com/secured?query=string');
+        $request = Request::create('https://example.com/secured?query=string');
         $response = $app->handle($request);
         $this->assertTrue($response->isRedirect('https://example.com/secured?query=string'));
     }
 
+    /**
+     * @throws Exception
+     */
     public function testConditionOnRoute()
     {
         $app = new Application();
@@ -241,11 +276,14 @@ class RouterTest extends TestCase
         })
         ->when('request.isSecure() == true');
 
-        $request = Request::create('http://example.com/secured');
+        $request = Request::create('https://example.com/secured');
         $response = $app->handle($request);
         $this->assertEquals(404, $response->getStatusCode());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testClassNameControllerSyntax()
     {
         $app = new Application();
@@ -255,6 +293,9 @@ class RouterTest extends TestCase
         $this->checkRouteResponse($app, '/foo', 'foo');
     }
 
+    /**
+     * @throws Exception
+     */
     public function testClassNameControllerSyntaxWithStaticMethod()
     {
         $app = new Application();
@@ -264,7 +305,10 @@ class RouterTest extends TestCase
         $this->checkRouteResponse($app, '/bar', 'bar');
     }
 
-    protected function checkRouteResponse(Application $app, $path, $expectedContent, $method = 'get', $message = null)
+    /**
+     * @throws Exception
+     */
+    protected function checkRouteResponse(Application $app, $path, $expectedContent, $method = 'get', $message = '')
     {
         $request = Request::create($path, $method);
         $response = $app->handle($request);
@@ -274,12 +318,12 @@ class RouterTest extends TestCase
 
 class MyController
 {
-    public function getFoo()
+    public function getFoo(): string
     {
         return 'foo';
     }
 
-    public static function getBar()
+    public static function getBar(): string
     {
         return 'bar';
     }

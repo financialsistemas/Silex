@@ -11,6 +11,7 @@
 
 namespace Silex\Tests;
 
+use Exception;
 use PHPUnit\Framework\TestCase;
 use Silex\Application;
 use Silex\Route;
@@ -45,6 +46,9 @@ class FunctionalTest extends TestCase
         $this->assertInstanceOf('Symfony\Component\Routing\Route', $routes->get('foo_abc'));
     }
 
+    /**
+     * @throws Exception
+     */
     public function testMount()
     {
         $mounted = new ControllerCollection(new Route());

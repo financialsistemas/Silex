@@ -11,6 +11,7 @@
 
 namespace Silex\Tests;
 
+use Exception;
 use Silex\Application;
 use Silex\Provider\ServiceControllerServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,6 +21,9 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class ServiceControllerResolverRouterTest extends RouterTest
 {
+    /**
+     * @throws Exception
+     */
     public function testServiceNameControllerSyntax()
     {
         $app = new Application();
@@ -34,7 +38,7 @@ class ServiceControllerResolverRouterTest extends RouterTest
         $this->checkRouteResponse($app, '/bar', 'bar');
     }
 
-    protected function checkRouteResponse(Application $app, $path, $expectedContent, $method = 'get', $message = null)
+    protected function checkRouteResponse(Application $app, $path, $expectedContent, $method = 'get', $message = '')
     {
         $request = Request::create($path, $method);
         $response = $app->handle($request);

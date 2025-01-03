@@ -11,6 +11,7 @@
 
 namespace Silex\Provider;
 
+use InvalidArgumentException;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
 use Monolog\Formatter\LineFormatter;
@@ -140,7 +141,7 @@ class MonologServiceProvider implements ServiceProviderInterface, BootableProvid
         $upper = strtoupper($name);
 
         if (!isset($levels[$upper])) {
-            throw new \InvalidArgumentException("Provided logging level '$name' does not exist. Must be a valid monolog logging level.");
+            throw new InvalidArgumentException("Provided logging level '$name' does not exist. Must be a valid monolog logging level.");
         }
 
         return $levels[$upper];

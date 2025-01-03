@@ -11,6 +11,7 @@
 
 namespace Silex\Tests\Provider;
 
+use Exception;
 use PHPUnit\Framework\TestCase;
 use Silex\Application;
 use Silex\Provider\TranslationServiceProvider;
@@ -28,7 +29,7 @@ class TranslationServiceProviderTest extends TestCase
     /**
      * @return Application
      */
-    protected function getPreparedApp()
+    protected function getPreparedApp(): Application
     {
         $app = new Application();
 
@@ -57,7 +58,7 @@ class TranslationServiceProviderTest extends TestCase
         return $app;
     }
 
-    public function transChoiceProvider()
+    public function transChoiceProvider(): array
     {
         return [
             ['key2', 0, null, '0 apples'],
@@ -72,7 +73,7 @@ class TranslationServiceProviderTest extends TestCase
         ];
     }
 
-    public function transProvider()
+    public function transProvider(): array
     {
         return [
             ['key1', null, 'The translation'],
@@ -103,7 +104,7 @@ class TranslationServiceProviderTest extends TestCase
     {
         $app = $this->getPreparedApp();
 
-        $result = $app['translator']->transChoice($key, $number, ['%count%' => $number], null, $locale);
+        $result = $app['translator']->trans($key, ['%count%' => $number], null, $locale);
         $this->assertEquals($expected, $result);
     }
 
@@ -121,6 +122,9 @@ class TranslationServiceProviderTest extends TestCase
         $this->assertEquals('The german translation', $result);
     }
 
+    /**
+     * @throws Exception
+     */
     public function testLocale()
     {
         $app = $this->getPreparedApp();
@@ -141,6 +145,9 @@ class TranslationServiceProviderTest extends TestCase
         $this->assertEquals('es', $response->getContent());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testLocaleInSubRequests()
     {
         $app = $this->getPreparedApp();
@@ -165,6 +172,9 @@ class TranslationServiceProviderTest extends TestCase
         $this->assertEquals('frenfr', $response->getContent());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testLocaleWithBefore()
     {
         $app = $this->getPreparedApp();
