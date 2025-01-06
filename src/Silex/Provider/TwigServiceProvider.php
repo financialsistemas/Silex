@@ -13,20 +13,30 @@ namespace Silex\Provider;
 
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
+use ReflectionClass;
 use Silex\Provider\Twig\RuntimeLoader;
 use Symfony\Bridge\Twig\AppVariable;
 use Symfony\Bridge\Twig\Extension\AssetExtension;
 use Symfony\Bridge\Twig\Extension\DumpExtension;
-use Symfony\Bridge\Twig\Extension\RoutingExtension;
-use Symfony\Bridge\Twig\Extension\TranslationExtension;
 use Symfony\Bridge\Twig\Extension\FormExtension;
-use Symfony\Bridge\Twig\Extension\SecurityExtension;
 use Symfony\Bridge\Twig\Extension\HttpFoundationExtension;
 use Symfony\Bridge\Twig\Extension\HttpKernelExtension;
+use Symfony\Bridge\Twig\Extension\HttpKernelRuntime;
+use Symfony\Bridge\Twig\Extension\RoutingExtension;
+use Symfony\Bridge\Twig\Extension\SecurityExtension;
+use Symfony\Bridge\Twig\Extension\TranslationExtension;
 use Symfony\Bridge\Twig\Extension\WebLinkExtension;
 use Symfony\Bridge\Twig\Form\TwigRendererEngine;
-use Symfony\Bridge\Twig\Extension\HttpKernelRuntime;
 use Symfony\Component\Form\FormRenderer;
+use Symfony\Component\HttpFoundation\UrlHelper;
+use Symfony\Component\HttpKernel\Fragment\HIncludeFragmentRenderer;
+use Twig\Environment as TwigEnvironment;
+use Twig\Extension\CoreExtension;
+use Twig\Extension\DebugExtension;
+use Twig\Loader\ArrayLoader;
+use Twig\Loader\ChainLoader;
+use Twig\Loader\FilesystemLoader;
+
 
 /**
  * Twig integration for Silex.
@@ -51,12 +61,13 @@ class TwigServiceProvider implements ServiceProviderInterface
         $app['twig.number_format.thousands_separator'] = ',';
 
         $app['twig'] = function ($app) {
+            /** @var TwigEnvironment $twig */
             $twig = $app['twig.environment_factory']($app);
             // registered for BC, but should not be used anymore
             // deprecated and should probably be removed in Silex 3.0
             $twig->addGlobal('app', $app);
 
-            $coreExtension = $twig->getExtension('Twig_Extension_Core');
+            $coreExtension = $twig->getExtension(CoreExtension::class);
 
             $coreExtension->setDateFormat($app['twig.date.format'], $app['twig.date.interval_format']);
 
@@ -67,29 +78,30 @@ class TwigServiceProvider implements ServiceProviderInterface
             $coreExtension->setNumberFormat($app['twig.number_format.decimals'], $app['twig.number_format.decimal_point'], $app['twig.number_format.thousands_separator']);
 
             if ($app['debug']) {
-                $twig->addExtension(new \Twig_Extension_Debug());
+                $twig->addExtension(new DebugExtension());
             }
 
             if (class_exists('Symfony\Bridge\Twig\Extension\RoutingExtension')) {
-                $app['twig.app_variable'] = function ($app) {
-                    $var = new AppVariable();
-                    if (isset($app['security.token_storage'])) {
-                        $var->setTokenStorage($app['security.token_storage']);
-                    }
-                    if (isset($app['request_stack'])) {
-                        $var->setRequestStack($app['request_stack']);
-                    }
-                    $var->setDebug($app['debug']);
+                if (!isset($app['twig.app_variable'])) {
+                    $app['twig.app_variable'] = function ($app) {
+                        $var = new AppVariable();
+                        if (isset($app['security.token_storage'])) {
+                            $var->setTokenStorage($app['security.token_storage']);
+                        }
+                        if (isset($app['request_stack'])) {
+                            $var->setRequestStack($app['request_stack']);
+                        }
+                        $var->setDebug($app['debug']);
 
-                    return $var;
-                };
+                        return $var;
+                    };
+                }
 
                 $twig->addGlobal('global', $app['twig.app_variable']);
 
                 if (isset($app['request_stack'])) {
-                    $twig->addExtension(new HttpFoundationExtension($app['request_stack']));
+                    $twig->addExtension(new HttpFoundationExtension(new UrlHelper($app['request_stack'], $app['request_context'])));
                     $twig->addExtension(new RoutingExtension($app['url_generator']));
-                    $twig->addExtension(new WebLinkExtension($app['request_stack']));
                 }
 
                 if (isset($app['translator'])) {
@@ -101,9 +113,13 @@ class TwigServiceProvider implements ServiceProviderInterface
                 }
 
                 if (isset($app['fragment.handler'])) {
-                    $app['fragment.renderer.hinclude']->setTemplating($twig);
+                    $app['fragment.renderer.hinclude'] = function ($app) {
+                        $renderer = new HIncludeFragmentRenderer($app['twig'], $app['uri_signer'], $app['fragment.renderer.hinclude.global_template'], $app['charset']);
+                        $renderer->setFragmentPath($app['fragment.path']);
+                        return $renderer;
+                    };
 
-                    $twig->addExtension(new HttpKernelExtension($app['fragment.handler']));
+                    $twig->addExtension(new HttpKernelExtension());
                 }
 
                 if (isset($app['assets.packages'])) {
@@ -116,7 +132,7 @@ class TwigServiceProvider implements ServiceProviderInterface
                     };
 
                     $app['twig.form.renderer'] = function ($app) {
-                        $csrfTokenManager = isset($app['csrf.token_manager']) ? $app['csrf.token_manager'] : null;
+                        $csrfTokenManager = $app['csrf.token_manager'] ?? null;
 
                         return new FormRenderer($app['twig.form.engine'], $csrfTokenManager);
                     };
@@ -124,9 +140,9 @@ class TwigServiceProvider implements ServiceProviderInterface
                     $twig->addExtension(new FormExtension());
 
                     // add loader for Symfony built-in form templates
-                    $reflected = new \ReflectionClass('Symfony\Bridge\Twig\Extension\FormExtension');
+                    $reflected = new ReflectionClass('Symfony\Bridge\Twig\Extension\FormExtension');
                     $path = dirname($reflected->getFileName()).'/../Resources/views/Form';
-                    $app['twig.loader']->addLoader(new \Twig_Loader_Filesystem($path));
+                    $app['twig.loader']->addLoader(new FilesystemLoader($path));
                 }
 
                 if (isset($app['var_dumper.cloner'])) {
@@ -134,13 +150,14 @@ class TwigServiceProvider implements ServiceProviderInterface
                 }
 
                 $twig->addRuntimeLoader($app['twig.runtime_loader']);
+                $twig->addExtension(new WebLinkExtension($app['request_stack']));
             }
 
             return $twig;
         };
 
         $app['twig.loader.filesystem'] = function ($app) {
-            $loader = new \Twig_Loader_Filesystem();
+            $loader = new FilesystemLoader();
             foreach (is_array($app['twig.path']) ? $app['twig.path'] : [$app['twig.path']] as $key => $val) {
                 if (is_string($key)) {
                     $loader->addPath($key, $val);
@@ -153,18 +170,18 @@ class TwigServiceProvider implements ServiceProviderInterface
         };
 
         $app['twig.loader.array'] = function ($app) {
-            return new \Twig_Loader_Array($app['twig.templates']);
+            return new ArrayLoader($app['twig.templates']);
         };
 
         $app['twig.loader'] = function ($app) {
-            return new \Twig_Loader_Chain([
+            return new ChainLoader([
                 $app['twig.loader.array'],
                 $app['twig.loader.filesystem'],
             ]);
         };
 
         $app['twig.environment_factory'] = $app->protect(function ($app) {
-            return new \Twig_Environment($app['twig.loader'], array_replace([
+            return new TwigEnvironment($app['twig.loader'], array_replace([
                 'charset' => $app['charset'],
                 'debug' => $app['debug'],
                 'strict_variables' => $app['debug'],

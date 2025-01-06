@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Silex\Provider\TwigServiceProvider;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Twig\Environment as TwigEnvironment;
 
 /**
  * @author Fabien Potencier <fabien@symfony.com>
@@ -25,7 +26,7 @@ class TwigTraitTest extends TestCase
     {
         $app = $this->createApplication();
 
-        $app['twig'] = $mailer = $this->getMockBuilder('Twig_Environment')->disableOriginalConstructor()->getMock();
+        $app['twig'] = $mailer = $this->getMockBuilder(TwigEnvironment::class)->disableOriginalConstructor()->getMock();
         $mailer->expects($this->once())->method('render')->will($this->returnValue('foo'));
 
         $response = $app->render('view');
@@ -37,7 +38,7 @@ class TwigTraitTest extends TestCase
     {
         $app = $this->createApplication();
 
-        $app['twig'] = $mailer = $this->getMockBuilder('Twig_Environment')->disableOriginalConstructor()->getMock();
+        $app['twig'] = $mailer = $this->getMockBuilder(TwigEnvironment::class)->disableOriginalConstructor()->getMock();
         $mailer->expects($this->once())->method('render')->will($this->returnValue('foo'));
 
         $response = $app->render('view', [], new Response('', 404));
@@ -48,7 +49,7 @@ class TwigTraitTest extends TestCase
     {
         $app = $this->createApplication();
 
-        $app['twig'] = $mailer = $this->getMockBuilder('Twig_Environment')->disableOriginalConstructor()->getMock();
+        $app['twig'] = $mailer = $this->getMockBuilder(TwigEnvironment::class)->disableOriginalConstructor()->getMock();
         $mailer->expects($this->once())->method('display')->will($this->returnCallback(function () { echo 'foo'; }));
 
         $response = $app->render('view', [], new StreamedResponse());
@@ -63,13 +64,13 @@ class TwigTraitTest extends TestCase
     {
         $app = $this->createApplication();
 
-        $app['twig'] = $mailer = $this->getMockBuilder('Twig_Environment')->disableOriginalConstructor()->getMock();
+        $app['twig'] = $mailer = $this->getMockBuilder(TwigEnvironment::class)->disableOriginalConstructor()->getMock();
         $mailer->expects($this->once())->method('render');
 
         $app->renderView('view');
     }
 
-    public function createApplication()
+    public function createApplication(): TwigApplication
     {
         $app = new TwigApplication();
         $app->register(new TwigServiceProvider());

@@ -11,19 +11,20 @@
 
 namespace Silex\Provider;
 
+use InvalidArgumentException;
+use Monolog\ErrorHandler;
+use Monolog\Formatter\LineFormatter;
+use Monolog\Handler;
+use Monolog\Logger;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
-use Monolog\Formatter\LineFormatter;
-use Monolog\Logger;
-use Monolog\Handler;
-use Monolog\ErrorHandler;
-use Silex\Application;
 use Silex\Api\BootableProviderInterface;
 use Silex\Api\EventListenerProviderInterface;
+use Silex\Application;
+use Silex\EventListener\LogListener;
 use Symfony\Bridge\Monolog\Handler\FingersCrossed\NotFoundActivationStrategy;
 use Symfony\Bridge\Monolog\Processor\DebugProcessor;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Silex\EventListener\LogListener;
 
 /**
  * Monolog Provider.
@@ -41,7 +42,7 @@ class MonologServiceProvider implements ServiceProviderInterface, BootableProvid
         if ($bridge = class_exists('Symfony\Bridge\Monolog\Logger')) {
             if (isset($app['request_stack'])) {
                 $app['monolog.not_found_activation_strategy'] = function () use ($app) {
-                    $level = MonologServiceProvider::translateLevel($app['monolog.level']);
+                    $level = self::translateLevel($app['monolog.level']);
 
                     return new NotFoundActivationStrategy($app['request_stack'], ['^/'], $level);
                 };
@@ -72,7 +73,7 @@ class MonologServiceProvider implements ServiceProviderInterface, BootableProvid
         };
 
         $app['monolog.handler'] = $defaultHandler = function () use ($app) {
-            $level = MonologServiceProvider::translateLevel($app['monolog.level']);
+            $level = self::translateLevel($app['monolog.level']);
 
             $handler = new Handler\StreamHandler($app['monolog.logfile'], $level, $app['monolog.bubble'], $app['monolog.permission']);
             $handler->setFormatter($app['monolog.formatter']);
@@ -140,7 +141,7 @@ class MonologServiceProvider implements ServiceProviderInterface, BootableProvid
         $upper = strtoupper($name);
 
         if (!isset($levels[$upper])) {
-            throw new \InvalidArgumentException("Provided logging level '$name' does not exist. Must be a valid monolog logging level.");
+            throw new InvalidArgumentException("Provided logging level '$name' does not exist. Must be a valid monolog logging level.");
         }
 
         return $levels[$upper];

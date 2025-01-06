@@ -11,11 +11,12 @@
 
 namespace Silex;
 
+use InvalidArgumentException;
 use Pimple\Container;
 
 class CallbackResolver
 {
-    const SERVICE_PATTERN = "/[A-Za-z0-9\._\-]+:[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*/";
+   const SERVICE_PATTERN = "/[A-Za-z0-9._\-]+::?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*/";
 
     private $app;
 
@@ -31,7 +32,7 @@ class CallbackResolver
      *
      * @return bool
      */
-    public function isValid($name)
+    public function isValid($name): bool
     {
         return is_string($name) && (preg_match(static::SERVICE_PATTERN, $name) || isset($this->app[$name]));
     }
@@ -43,11 +44,12 @@ class CallbackResolver
      *
      * @return callable
      *
-     * @throws \InvalidArgumentException in case the method does not exist
+     * @throws InvalidArgumentException in case the method does not exist
      */
-    public function convertCallback($name)
+    public function convertCallback(string $name)
     {
         if (preg_match(static::SERVICE_PATTERN, $name)) {
+            $name = str_replace('::', ':', $name);
             list($service, $method) = explode(':', $name, 2);
             $callback = [$this->app[$service], $method];
         } else {
@@ -56,7 +58,7 @@ class CallbackResolver
         }
 
         if (!is_callable($callback)) {
-            throw new \InvalidArgumentException(sprintf('Service "%s" is not callable.', $service));
+            throw new InvalidArgumentException(sprintf('Service "%s" is not callable.', $service));
         }
 
         return $callback;
@@ -65,11 +67,11 @@ class CallbackResolver
     /**
      * Returns a callable given its string representation if it is a valid service method.
      *
-     * @param string $name
+     * @param string|object $name
      *
      * @return string|callable A callable value or the string passed in
      *
-     * @throws \InvalidArgumentException in case the method does not exist
+     * @throws InvalidArgumentException in case the method does not exist
      */
     public function resolveCallback($name)
     {

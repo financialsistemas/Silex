@@ -12,13 +12,14 @@
 namespace Silex\Provider\Twig;
 
 use Pimple\Container;
+use Twig\RuntimeLoader\RuntimeLoaderInterface;
 
 /**
  * Loads Twig extension runtimes via Pimple.
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-class RuntimeLoader implements \Twig_RuntimeLoaderInterface
+class RuntimeLoader implements RuntimeLoaderInterface
 {
     private $container;
     private $mapping;
@@ -37,5 +38,6 @@ class RuntimeLoader implements \Twig_RuntimeLoaderInterface
         if (isset($this->mapping[$class])) {
             return $this->container[$this->mapping[$class]];
         }
+        return null;
     }
 }

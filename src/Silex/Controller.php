@@ -11,6 +11,7 @@
 
 namespace Silex;
 
+use BadMethodCallException;
 use Silex\Exception\ControllerFrozenException;
 
 /**
@@ -52,7 +53,7 @@ class Controller
      *
      * @return Route
      */
-    public function getRoute()
+    public function getRoute(): Route
     {
         return $this->route;
     }
@@ -60,9 +61,9 @@ class Controller
     /**
      * Gets the controller's route name.
      *
-     * @return string
+     * @return string|null
      */
-    public function getRouteName()
+    public function getRouteName(): ?string
     {
         return $this->routeName;
     }
@@ -74,7 +75,7 @@ class Controller
      *
      * @return Controller $this The current Controller instance
      */
-    public function bind($routeName)
+    public function bind(string $routeName): Controller
     {
         if ($this->isFrozen) {
             throw new ControllerFrozenException(sprintf('Calling %s on frozen %s instance.', __METHOD__, __CLASS__));
@@ -88,7 +89,7 @@ class Controller
     public function __call($method, $arguments)
     {
         if (!method_exists($this->route, $method)) {
-            throw new \BadMethodCallException(sprintf('Method "%s::%s" does not exist.', get_class($this->route), $method));
+            throw new BadMethodCallException(sprintf('Method "%s::%s" does not exist.', get_class($this->route), $method));
         }
 
         call_user_func_array([$this->route, $method], $arguments);
@@ -115,8 +116,6 @@ class Controller
         $routeName = preg_replace('/[^a-z0-9A-Z_.]+/', '', $routeName);
 
         // Collapse consecutive underscores down into a single underscore.
-        $routeName = preg_replace('/_+/', '_', $routeName);
-
-        return $routeName;
+        return preg_replace('/_+/', '_', $routeName);
     }
 }

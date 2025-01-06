@@ -25,6 +25,9 @@ class CallbackServicesTest extends TestCase
 {
     public $called = [];
 
+    /**
+     * @throws \Exception
+     */
     public function testCallbacksAsServices()
     {
         $app = new Application();

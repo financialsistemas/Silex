@@ -26,13 +26,13 @@ trait TwigTrait
      *
      * To stream a view, pass an instance of StreamedResponse as a third argument.
      *
-     * @param string   $view       The view name
-     * @param array    $parameters An array of parameters to pass to the view
-     * @param Response $response   A Response instance
+     * @param string $view The view name
+     * @param array $parameters An array of parameters to pass to the view
+     * @param Response|null $response A Response instance
      *
      * @return Response A Response instance
      */
-    public function render($view, array $parameters = [], Response $response = null)
+    public function render($view, array $parameters = [], Response $response = null): ?Response
     {
         $twig = $this['twig'];
 
@@ -58,7 +58,7 @@ trait TwigTrait
      *
      * @return string The rendered view
      */
-    public function renderView($view, array $parameters = [])
+    public function renderView($view, array $parameters = []): string
     {
         return $this['twig']->render($view, $parameters);
     }

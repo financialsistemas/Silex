@@ -11,7 +11,9 @@
 
 namespace Silex\Tests;
 
+use Exception;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,6 +25,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class MiddlewareTest extends TestCase
 {
+    /**
+     * @throws Exception
+     */
     public function testBeforeAndAfterFilter()
     {
         $i = 0;
@@ -51,6 +56,9 @@ class MiddlewareTest extends TestCase
         $this->assertEquals(3, $i);
     }
 
+    /**
+     * @throws Exception
+     */
     public function testAfterFilterWithResponseObject()
     {
         $i = 0;
@@ -73,6 +81,9 @@ class MiddlewareTest extends TestCase
         $this->assertEquals(2, $i);
     }
 
+    /**
+     * @throws Exception
+     */
     public function testMultipleFilters()
     {
         $i = 0;
@@ -111,6 +122,9 @@ class MiddlewareTest extends TestCase
         $this->assertEquals(5, $i);
     }
 
+    /**
+     * @throws Exception
+     */
     public function testFiltersShouldFireOnException()
     {
         $i = 0;
@@ -122,7 +136,7 @@ class MiddlewareTest extends TestCase
         });
 
         $app->match('/foo', function () {
-            throw new \RuntimeException();
+            throw new RuntimeException();
         });
 
         $app->after(function () use (&$i) {
@@ -139,6 +153,9 @@ class MiddlewareTest extends TestCase
         $this->assertEquals(2, $i);
     }
 
+    /**
+     * @throws Exception
+     */
     public function testFiltersShouldFireOnHttpException()
     {
         $i = 0;
@@ -163,6 +180,9 @@ class MiddlewareTest extends TestCase
         $this->assertEquals(2, $i);
     }
 
+    /**
+     * @throws Exception
+     */
     public function testBeforeFilterPreventsBeforeMiddlewaresToBeExecuted()
     {
         $app = new Application();
@@ -178,16 +198,22 @@ class MiddlewareTest extends TestCase
         $this->assertEquals('app before', $app->handle(Request::create('/'))->getContent());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testBeforeFilterExceptionsWhenHandlingAnException()
     {
         $app = new Application();
 
-        $app->before(function () { throw new \RuntimeException(''); });
+        $app->before(function () { throw new RuntimeException(''); });
 
         // even if the before filter throws an exception, we must have the 404
         $this->assertEquals(404, $app->handle(Request::create('/'))->getStatusCode());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testRequestShouldBePopulatedOnBefore()
     {
         $app = new Application();
@@ -207,6 +233,9 @@ class MiddlewareTest extends TestCase
         $this->assertEquals('baz', $app->handle($request)->getContent());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testBeforeFilterAccessesRequestAndCanReturnResponse()
     {
         $app = new Application();
@@ -215,12 +244,15 @@ class MiddlewareTest extends TestCase
             return new Response($request->get('name'));
         });
 
-        $app->match('/', function () use ($app) { throw new \Exception('Should never be executed'); });
+        $app->match('/', function () { throw new Exception('Should never be executed'); });
 
         $request = Request::create('/?name=Fabien');
         $this->assertEquals('Fabien', $app->handle($request)->getContent());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testAfterFilterAccessRequestResponse()
     {
         $app = new Application();
@@ -235,6 +267,9 @@ class MiddlewareTest extends TestCase
         $this->assertEquals('foo---', $app->handle($request)->getContent());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testAfterFilterCanReturnResponse()
     {
         $app = new Application();
@@ -249,6 +284,9 @@ class MiddlewareTest extends TestCase
         $this->assertEquals('bar', $app->handle($request)->getContent());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testRouteAndApplicationMiddlewareParameterInjection()
     {
         $app = new Application();

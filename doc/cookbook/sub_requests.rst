@@ -15,7 +15,7 @@ You can make a sub-request by calling the ``handle`` method on the
 * ``$request``: An instance of the ``Request`` class which represents the
    HTTP request.
 
-* ``$type``: Must be either ``HttpKernelInterface::MASTER_REQUEST`` or
+* ``$type``: Must be either ``HttpKernelInterface::MAIN_REQUEST`` or
   ``HttpKernelInterface::SUB_REQUEST``. Certain listeners are only executed for
   the master request, so it's important that this is set to ``SUB_REQUEST``.
 

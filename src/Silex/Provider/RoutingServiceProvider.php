@@ -13,15 +13,15 @@ namespace Silex\Provider;
 
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
-use Silex\ControllerCollection;
 use Silex\Api\EventListenerProviderInterface;
-use Silex\Provider\Routing\RedirectableUrlMatcher;
+use Silex\ControllerCollection;
 use Silex\Provider\Routing\LazyRequestMatcher;
-use Symfony\Component\Routing\RouteCollection;
+use Silex\Provider\Routing\RedirectableUrlMatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpKernel\EventListener\RouterListener;
 use Symfony\Component\Routing\Generator\UrlGenerator;
 use Symfony\Component\Routing\RequestContext;
-use Symfony\Component\HttpKernel\EventListener\RouterListener;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Routing\RouteCollection;
 
 /**
  * Symfony Routing component Provider.
@@ -56,8 +56,8 @@ class RoutingServiceProvider implements ServiceProviderInterface, EventListenerP
         $app['request_context'] = function ($app) {
             $context = new RequestContext();
 
-            $context->setHttpPort(isset($app['request.http_port']) ? $app['request.http_port'] : 80);
-            $context->setHttpsPort(isset($app['request.https_port']) ? $app['request.https_port'] : 443);
+            $context->setHttpPort($app['request.http_port'] ?? 80);
+            $context->setHttpsPort($app['request.https_port'] ?? 443);
 
             return $context;
         };
@@ -66,17 +66,17 @@ class RoutingServiceProvider implements ServiceProviderInterface, EventListenerP
             return $app['controllers_factory'];
         };
 
-        $controllers_factory = function () use ($app, &$controllers_factory) {
-            return new ControllerCollection($app['route_factory'], $app['routes_factory'], $controllers_factory);
+        $controllersFactory = function () use ($app, &$controllersFactory) {
+            return new ControllerCollection($app['route_factory'], $app['routes_factory'], $controllersFactory);
         };
-        $app['controllers_factory'] = $app->factory($controllers_factory);
+        $app['controllers_factory'] = $app->factory($controllersFactory);
 
         $app['routing.listener'] = function ($app) {
             $urlMatcher = new LazyRequestMatcher(function () use ($app) {
                 return $app['request_matcher'];
             });
 
-            return new RouterListener($urlMatcher, $app['request_stack'], $app['request_context'], $app['logger'], null, isset($app['debug']) ? $app['debug'] : false);
+            return new RouterListener($urlMatcher, $app['request_stack'], $app['request_context'], $app['logger'], null, $app['debug'] ?? false);
         };
     }
 

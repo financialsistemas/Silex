@@ -11,8 +11,10 @@
 
 namespace Silex;
 
-use Symfony\Component\Routing\RouteCollection;
+use BadMethodCallException;
+use LogicException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\RouteCollection;
 
 /**
  * Builds Silex controllers.
@@ -52,19 +54,19 @@ class ControllerCollection
         $this->routesFactory = $routesFactory;
         $this->controllersFactory = $controllersFactory;
         $this->defaultController = function (Request $request) {
-            throw new \LogicException(sprintf('The "%s" route must have code to run when it matches.', $request->attributes->get('_route')));
+            throw new LogicException(sprintf('The "%s" route must have code to run when it matches.', $request->attributes->get('_route')));
         };
     }
 
     /**
      * Mounts controllers under the given route prefix.
      *
-     * @param string                        $prefix      The route prefix
+     * @param string $prefix      The route prefix
      * @param ControllerCollection|callable $controllers A ControllerCollection instance or a callable for defining routes
      *
-     * @throws \LogicException
+     * @throws LogicException
      */
-    public function mount($prefix, $controllers)
+    public function mount(string $prefix, $controllers)
     {
         if (is_callable($controllers)) {
             $collection = $this->controllersFactory ? call_user_func($this->controllersFactory) : new static(new Route(), new RouteCollection());
@@ -72,7 +74,7 @@ class ControllerCollection
             call_user_func($controllers, $collection);
             $controllers = $collection;
         } elseif (!$controllers instanceof self) {
-            throw new \LogicException('The "mount" method takes either a "ControllerCollection" instance or callable.');
+            throw new LogicException('The "mount" method takes either a "ControllerCollection" instance or callable.');
         }
 
         $controllers->prefix = $prefix;
@@ -90,7 +92,7 @@ class ControllerCollection
      *
      * @return Controller
      */
-    public function match($pattern, $to = null)
+    public function match(string $pattern, $to = null): Controller
     {
         $route = clone $this->defaultRoute;
         $route->setPath($pattern);
@@ -108,7 +110,7 @@ class ControllerCollection
      *
      * @return Controller
      */
-    public function get($pattern, $to = null)
+    public function get(string $pattern, $to = null): Controller
     {
         return $this->match($pattern, $to)->method('GET');
     }
@@ -121,7 +123,7 @@ class ControllerCollection
      *
      * @return Controller
      */
-    public function post($pattern, $to = null)
+    public function post(string $pattern, $to = null): Controller
     {
         return $this->match($pattern, $to)->method('POST');
     }
@@ -134,7 +136,7 @@ class ControllerCollection
      *
      * @return Controller
      */
-    public function put($pattern, $to = null)
+    public function put(string $pattern, $to = null): Controller
     {
         return $this->match($pattern, $to)->method('PUT');
     }
@@ -147,7 +149,7 @@ class ControllerCollection
      *
      * @return Controller
      */
-    public function delete($pattern, $to = null)
+    public function delete(string $pattern, $to = null): Controller
     {
         return $this->match($pattern, $to)->method('DELETE');
     }
@@ -160,7 +162,7 @@ class ControllerCollection
      *
      * @return Controller
      */
-    public function options($pattern, $to = null)
+    public function options(string $pattern, $to = null): Controller
     {
         return $this->match($pattern, $to)->method('OPTIONS');
     }
@@ -173,7 +175,7 @@ class ControllerCollection
      *
      * @return Controller
      */
-    public function patch($pattern, $to = null)
+    public function patch(string $pattern, $to = null): Controller
     {
         return $this->match($pattern, $to)->method('PATCH');
     }
@@ -181,7 +183,7 @@ class ControllerCollection
     public function __call($method, $arguments)
     {
         if (!method_exists($this->defaultRoute, $method)) {
-            throw new \BadMethodCallException(sprintf('Method "%s::%s" does not exist.', get_class($this->defaultRoute), $method));
+            throw new BadMethodCallException(sprintf('Method "%s::%s" does not exist.', get_class($this->defaultRoute), $method));
         }
 
         call_user_func_array([$this->defaultRoute, $method], $arguments);
@@ -198,7 +200,7 @@ class ControllerCollection
      *
      * @return RouteCollection A RouteCollection instance
      */
-    public function flush()
+    public function flush(): RouteCollection
     {
         if (null === $this->routesFactory) {
             $routes = new RouteCollection();
@@ -209,7 +211,7 @@ class ControllerCollection
         return $this->doFlush('', $routes);
     }
 
-    private function doFlush($prefix, RouteCollection $routes)
+    private function doFlush($prefix, RouteCollection $routes): RouteCollection
     {
         if ('' !== $prefix) {
             $prefix = '/'.trim(trim($prefix), '/');

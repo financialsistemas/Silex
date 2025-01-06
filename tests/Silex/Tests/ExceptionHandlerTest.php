@@ -11,7 +11,10 @@
 
 namespace Silex\Tests;
 
+use Exception;
+use LogicException;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,37 +27,46 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class ExceptionHandlerTest extends TestCase
 {
+    /**
+     * @throws Exception
+     */
     public function testExceptionHandlerExceptionNoDebug()
     {
         $app = new Application();
         $app['debug'] = false;
 
         $app->match('/foo', function () {
-            throw new \RuntimeException('foo exception');
+            throw new RuntimeException('foo exception');
         });
 
         $request = Request::create('/foo');
         $response = $app->handle($request);
-        $this->assertContains('Whoops, looks like something went wrong.', $response->getContent());
+        $this->assertStringContainsString('The server returned a "500 Internal Server Error".', $response->getContent());
         $this->assertEquals(500, $response->getStatusCode());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testExceptionHandlerExceptionDebug()
     {
         $app = new Application();
         $app['debug'] = true;
 
         $app->match('/foo', function () {
-            throw new \RuntimeException('foo exception');
+            throw new RuntimeException('foo exception');
         });
 
         $request = Request::create('/foo');
         $response = $app->handle($request);
 
-        $this->assertContains('foo exception', $response->getContent());
+        $this->assertStringContainsString('foo exception', $response->getContent());
         $this->assertEquals(500, $response->getStatusCode());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testExceptionHandlerNotFoundNoDebug()
     {
         $app = new Application();
@@ -62,10 +74,13 @@ class ExceptionHandlerTest extends TestCase
 
         $request = Request::create('/foo');
         $response = $app->handle($request);
-        $this->assertContains('Sorry, the page you are looking for could not be found.', $response->getContent());
+        $this->assertStringContainsString('The server returned a "404 Not Found".', $response->getContent());
         $this->assertEquals(404, $response->getStatusCode());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testExceptionHandlerNotFoundDebug()
     {
         $app = new Application();
@@ -73,10 +88,13 @@ class ExceptionHandlerTest extends TestCase
 
         $request = Request::create('/foo');
         $response = $app->handle($request);
-        $this->assertContains('No route found for "GET /foo"', html_entity_decode($response->getContent()));
+        $this->assertStringContainsString('No route found for "GET /foo"', html_entity_decode($response->getContent()));
         $this->assertEquals(404, $response->getStatusCode());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testExceptionHandlerMethodNotAllowedNoDebug()
     {
         $app = new Application();
@@ -86,11 +104,14 @@ class ExceptionHandlerTest extends TestCase
 
         $request = Request::create('/foo', 'POST');
         $response = $app->handle($request);
-        $this->assertContains('Whoops, looks like something went wrong.', $response->getContent());
+        $this->assertStringContainsString('The server returned a "405 Method Not Allowed".', $response->getContent());
         $this->assertEquals(405, $response->getStatusCode());
         $this->assertEquals('GET', $response->headers->get('Allow'));
     }
 
+    /**
+     * @throws Exception
+     */
     public function testExceptionHandlerMethodNotAllowedDebug()
     {
         $app = new Application();
@@ -100,7 +121,8 @@ class ExceptionHandlerTest extends TestCase
 
         $request = Request::create('/foo', 'POST');
         $response = $app->handle($request);
-        $this->assertContains('No route found for "POST /foo": Method Not Allowed (Allow: GET)', html_entity_decode($response->getContent()));
+        $this->assertStringContainsString('No route found for "POST', html_entity_decode($response->getContent()));
+        $this->assertStringContainsString('Method Not Allowed (Allow: GET)', html_entity_decode($response->getContent()));
         $this->assertEquals(405, $response->getStatusCode());
         $this->assertEquals('GET', $response->headers->get('Allow'));
     }
@@ -111,24 +133,29 @@ class ExceptionHandlerTest extends TestCase
         unset($app['exception_handler']);
 
         $app->match('/foo', function () {
-            throw new \RuntimeException('foo exception');
+            throw new RuntimeException('foo exception');
         });
 
         try {
             $request = Request::create('/foo');
             $app->handle($request);
             $this->fail('->handle() should not catch exceptions where no error handler was supplied');
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             $this->assertEquals('foo exception', $e->getMessage());
+        } catch (Exception $e) {
+            $this->assertEquals('foo exception', $e->getPrevious()->getMessage());
         }
     }
 
+    /**
+     * @throws Exception
+     */
     public function testOneExceptionHandler()
     {
         $app = new Application();
 
         $app->match('/500', function () {
-            throw new \RuntimeException('foo exception');
+            throw new RuntimeException('foo exception');
         });
 
         $app->match('/404', function () {
@@ -157,7 +184,7 @@ class ExceptionHandlerTest extends TestCase
         $app = new Application();
 
         $app->match('/foo', function () {
-            throw new \RuntimeException('foo exception');
+            throw new RuntimeException('foo exception');
         });
 
         $errors = 0;
@@ -181,7 +208,8 @@ class ExceptionHandlerTest extends TestCase
             ++$errors;
         });
 
-        $request = Request::create('/foo');
+        Request::create('/foo');
+
         $this->checkRouteResponse($app, '/foo', 'foo exception handler', 'should return the first response returned by an exception handler');
 
         $this->assertEquals(3, $errors, 'should execute error handlers until a response is returned');
@@ -193,7 +221,7 @@ class ExceptionHandlerTest extends TestCase
         unset($app['exception_handler']);
 
         $app->match('/foo', function () {
-            throw new \RuntimeException('foo exception');
+            throw new RuntimeException('foo exception');
         });
 
         $errors = 0;
@@ -206,10 +234,12 @@ class ExceptionHandlerTest extends TestCase
             $request = Request::create('/foo');
             $app->handle($request);
             $this->fail('->handle() should not catch exceptions where an empty error handler was supplied');
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             $this->assertEquals('foo exception', $e->getMessage());
-        } catch (\LogicException $e) {
+        } catch (LogicException $e) {
             $this->assertEquals('foo exception', $e->getPrevious()->getMessage());
+        } catch (Exception $e) {
+            $this->assertEquals('foo exception', $e->getPrevious()->getPrevious()->getMessage());
         }
 
         $this->assertEquals(1, $errors, 'should execute the error handler');
@@ -220,14 +250,14 @@ class ExceptionHandlerTest extends TestCase
         $app = new Application();
 
         $app->match('/foo', function () {
-            throw new \RuntimeException('foo exception');
+            throw new RuntimeException('foo exception');
         });
 
         $app->error(function ($e) {
             return 'foo exception handler';
         });
 
-        $request = Request::create('/foo');
+        Request::create('/foo');
         $this->checkRouteResponse($app, '/foo', 'foo exception handler', 'should accept a string response from the error handler');
     }
 
@@ -236,19 +266,21 @@ class ExceptionHandlerTest extends TestCase
         $app = new Application();
 
         $app->match('/foo', function () {
-            throw new \RuntimeException('foo exception');
+            throw new RuntimeException('foo exception');
         });
 
         $app->error(function ($e) {
-            throw new \RuntimeException('foo exception handler exception');
+            throw new RuntimeException('foo exception handler exception');
         });
 
         try {
             $request = Request::create('/foo');
             $app->handle($request);
             $this->fail('->handle() should not catch exceptions thrown from an error handler');
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             $this->assertEquals('foo exception handler exception', $e->getMessage());
+        } catch (Exception $e) {
+            $this->assertEquals('foo exception handler exception', $e->getPrevious()->getMessage());
         }
     }
 
@@ -257,7 +289,7 @@ class ExceptionHandlerTest extends TestCase
         $app = new Application();
 
         $app->match('/foo', function () {
-            throw new \RuntimeException('foo exception');
+            throw new RuntimeException('foo exception');
         });
 
         $app->before(function () {
@@ -270,30 +302,38 @@ class ExceptionHandlerTest extends TestCase
             $request = Request::create('/foo');
             $app->handle($request);
             $this->fail('default exception handler should have been removed');
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             $this->assertEquals('foo exception', $e->getMessage());
+        } catch (Exception $e) {
+            $this->assertEquals('foo exception', $e->getPrevious()->getMessage());
         }
     }
 
+    /**
+     * @throws Exception
+     */
     public function testExceptionHandlerWithDefaultException()
     {
         $app = new Application();
         $app['debug'] = false;
 
         $app->match('/foo', function () {
-            throw new \Exception();
+            throw new Exception();
         });
 
-        $app->error(function (\Exception $e) {
+        $app->error(function (Exception $e) {
             return new Response('Exception thrown', 500);
         });
 
         $request = Request::create('/foo');
         $response = $app->handle($request);
-        $this->assertContains('Exception thrown', $response->getContent());
+        $this->assertStringContainsString('Exception thrown', $response->getContent());
         $this->assertEquals(500, $response->getStatusCode());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testExceptionHandlerWithStandardException()
     {
         $app = new Application();
@@ -301,24 +341,27 @@ class ExceptionHandlerTest extends TestCase
 
         $app->match('/foo', function () {
             // Throw a normal exception
-            throw new \Exception();
+            throw new Exception();
         });
 
         // Register 2 error handlers, each with a specified Exception class
         // Since we throw a standard Exception above only
         // the second error handler should fire
-        $app->error(function (\LogicException $e) { // Extends \Exception
+        $app->error(function (LogicException $e) { // Extends \Exception
             return 'Caught LogicException';
         });
-        $app->error(function (\Exception $e) {
+        $app->error(function (Exception $e) {
             return 'Caught Exception';
         });
 
         $request = Request::create('/foo');
         $response = $app->handle($request);
-        $this->assertContains('Caught Exception', $response->getContent());
+        $this->assertStringContainsString('Caught Exception', $response->getContent());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testExceptionHandlerWithSpecifiedException()
     {
         $app = new Application();
@@ -326,24 +369,27 @@ class ExceptionHandlerTest extends TestCase
 
         $app->match('/foo', function () {
             // Throw a specified exception
-            throw new \LogicException();
+            throw new LogicException();
         });
 
         // Register 2 error handlers, each with a specified Exception class
         // Since we throw a LogicException above
         // the first error handler should fire
-        $app->error(function (\LogicException $e) { // Extends \Exception
+        $app->error(function (LogicException $e) { // Extends \Exception
             return 'Caught LogicException';
         });
-        $app->error(function (\Exception $e) {
+        $app->error(function (Exception $e) {
             return 'Caught Exception';
         });
 
         $request = Request::create('/foo');
         $response = $app->handle($request);
-        $this->assertContains('Caught LogicException', $response->getContent());
+        $this->assertStringContainsString('Caught LogicException', $response->getContent());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testExceptionHandlerWithSpecifiedExceptionInReverseOrder()
     {
         $app = new Application();
@@ -351,7 +397,7 @@ class ExceptionHandlerTest extends TestCase
 
         $app->match('/foo', function () {
             // Throw a specified exception
-            throw new \LogicException();
+            throw new LogicException();
         });
 
         // Register the \Exception error handler first, since the
@@ -359,25 +405,28 @@ class ExceptionHandlerTest extends TestCase
         // second more specific error handler should not fire since
         // the \Exception error handler is registered first and also
         // captures all exceptions that extend it
-        $app->error(function (\Exception $e) {
+        $app->error(function (Exception $e) {
             return 'Caught Exception';
         });
-        $app->error(function (\LogicException $e) { // Extends \Exception
+        $app->error(function (LogicException $e) { // Extends \Exception
             return 'Caught LogicException';
         });
 
         $request = Request::create('/foo');
         $response = $app->handle($request);
-        $this->assertContains('Caught Exception', $response->getContent());
+        $this->assertStringContainsString('Caught Exception', $response->getContent());
     }
 
+    /**
+     * @throws Exception
+     */
     public function testExceptionHandlerWithArrayStyleCallback()
     {
         $app = new Application();
         $app['debug'] = false;
 
         $app->match('/foo', function () {
-            throw new \Exception();
+            throw new Exception();
         });
 
         // Array style callback for error handler
@@ -385,10 +434,10 @@ class ExceptionHandlerTest extends TestCase
 
         $request = Request::create('/foo');
         $response = $app->handle($request);
-        $this->assertContains('Caught Exception', $response->getContent());
+        $this->assertStringContainsString('Caught Exception', $response->getContent());
     }
 
-    protected function checkRouteResponse($app, $path, $expectedContent, $method = 'get', $message = null)
+    protected function checkRouteResponse($app, $path, $expectedContent, $method = 'get', $message = '')
     {
         $request = Request::create($path, $method);
         $response = $app->handle($request);
@@ -397,7 +446,7 @@ class ExceptionHandlerTest extends TestCase
         return $response;
     }
 
-    public function exceptionHandler()
+    public function exceptionHandler(): string
     {
         return 'Caught Exception';
     }

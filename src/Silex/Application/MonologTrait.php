@@ -25,11 +25,11 @@ trait MonologTrait
      *
      * @param string $message The log message
      * @param array  $context The log context
-     * @param int    $level   The logging level
+     * @param int $level   The logging level
      *
      * @return bool Whether the record has been processed
      */
-    public function log($message, array $context = [], $level = Logger::INFO)
+    public function log(string $message, array $context = [], int $level = Logger::INFO): bool
     {
         return $this['monolog']->addRecord($level, $message, $context);
     }

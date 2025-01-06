@@ -11,13 +11,13 @@
 
 namespace Silex\Tests\Provider\SecurityServiceProviderTest;
 
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
 use Symfony\Component\Security\Guard\AbstractGuardAuthenticator;
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
 
 /**
  * This class is used to test "guard" authentication with the SecurityServiceProvider.
@@ -38,17 +38,17 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
         ];
     }
 
-    public function supports(Request $request)
+    public function supports(Request $request): bool
     {
         return !empty($request->headers->get('X-AUTH-TOKEN'));
     }
 
-    public function getUser($credentials, UserProviderInterface $userProvider)
+    public function getUser($credentials, UserProviderInterface $userProvider): ?UserInterface
     {
         return $userProvider->loadUserByUsername($credentials['username']);
     }
 
-    public function checkCredentials($credentials, UserInterface $user)
+    public function checkCredentials($credentials, UserInterface $user): bool
     {
         // This is not a safe way of validating a password.
         return $user->getPassword() === $credentials['secret'];
@@ -59,7 +59,7 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
         return;
     }
 
-    public function onAuthenticationFailure(Request $request, AuthenticationException $exception)
+    public function onAuthenticationFailure(Request $request, AuthenticationException $exception): JsonResponse
     {
         $data = [
             'message' => strtr($exception->getMessageKey(), $exception->getMessageData()),
@@ -68,7 +68,7 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
         return new JsonResponse($data, 403);
     }
 
-    public function start(Request $request, AuthenticationException $authException = null)
+    public function start(Request $request, AuthenticationException $authException = null): JsonResponse
     {
         $data = [
             'message' => 'Authentication Required',
@@ -77,7 +77,7 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
         return new JsonResponse($data, 401);
     }
 
-    public function supportsRememberMe()
+    public function supportsRememberMe(): bool
     {
         return false;
     }

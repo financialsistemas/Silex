@@ -45,22 +45,22 @@ class SilexFormExtension implements FormExtensionInterface
         return $this->types[$name];
     }
 
-    public function hasType($name)
+    public function hasType($name): bool
     {
         return isset($this->types[$name]);
     }
 
     public function getTypeExtensions($name)
     {
-        return isset($this->typeExtensions[$name]) ? $this->typeExtensions[$name] : [];
+        return $this->typeExtensions[$name] ?? [];
     }
 
-    public function hasTypeExtensions($name)
+    public function hasTypeExtensions($name): bool
     {
         return isset($this->typeExtensions[$name]);
     }
 
-    public function getTypeGuesser()
+    public function getTypeGuesser(): FormTypeGuesserChain
     {
         if (!$this->guesserLoaded) {
             $this->guesserLoaded = true;
@@ -105,7 +105,14 @@ class SilexFormExtension implements FormExtensionInterface
                 }
                 $extension = $this->app[$extension];
             }
-            $this->typeExtensions[$extension->getExtendedType()][] = $extension;
+
+            if (method_exists($extension, 'getExtendedTypes')) {
+                foreach ($extension::getExtendedTypes() as $type) {
+                    $this->typeExtensions[$type][] = $extension;
+                }
+            } elseif (method_exists($extension, 'getExtendedType')) {
+                $this->typeExtensions[$extension->getExtendedType()][] = $extension;
+            }
         }
     }
 

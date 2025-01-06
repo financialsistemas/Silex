@@ -27,7 +27,7 @@ class Route extends BaseRoute
      *
      *  * compiler_class: A class name able to compile this route instance (RouteCompiler by default)
      *
-     * @param string       $path         The path pattern to match
+     * @param string $path         The path pattern to match
      * @param array        $defaults     An array of default parameter values
      * @param array        $requirements An array of requirements for parameters (regexes)
      * @param array        $options      An array of options
@@ -35,7 +35,7 @@ class Route extends BaseRoute
      * @param string|array $schemes      A required URI scheme or an array of restricted schemes
      * @param string|array $methods      A required HTTP method or an array of restricted methods
      */
-    public function __construct($path = '/', array $defaults = [], array $requirements = [], array $options = [], $host = '', $schemes = [], $methods = [])
+    public function __construct(string $path = '/', array $defaults = [], array $requirements = [], array $options = [], $host = '', $schemes = [], $methods = [])
     {
         // overridden constructor to make $path optional
         parent::__construct($path, $defaults, $requirements, $options, $host, $schemes, $methods);
@@ -44,11 +44,11 @@ class Route extends BaseRoute
     /**
      * Sets the route code that should be executed when matched.
      *
-     * @param callable $to PHP callback that returns the response when matched
+     * @param callable|null $to PHP callback that returns the response when matched
      *
      * @return Route $this The current Route instance
      */
-    public function run($to)
+    public function run(?callable $to): Route
     {
         $this->setDefault('_controller', $to);
 
@@ -63,7 +63,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current route instance
      */
-    public function assert($variable, $regexp)
+    public function assert(string $variable, string $regexp): Route
     {
         $this->setRequirement($variable, $regexp);
 
@@ -78,7 +78,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function value($variable, $default)
+    public function value(string $variable, $default): Route
     {
         $this->setDefault($variable, $default);
 
@@ -93,7 +93,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function convert($variable, $callback)
+    public function convert(string $variable, $callback): Route
     {
         $converters = $this->getOption('_converters');
         $converters[$variable] = $callback;
@@ -109,7 +109,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function method($method)
+    public function method(string $method): Route
     {
         $this->setMethods(explode('|', $method));
 
@@ -123,7 +123,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function host($host)
+    public function host(string $host): Route
     {
         $this->setHost($host);
 
@@ -135,7 +135,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function requireHttp()
+    public function requireHttp(): Route
     {
         $this->setSchemes('http');
 
@@ -147,7 +147,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function requireHttps()
+    public function requireHttps(): Route
     {
         $this->setSchemes('https');
 
@@ -161,7 +161,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function before($callback)
+    public function before($callback): Route
     {
         $callbacks = $this->getOption('_before_middlewares');
         $callbacks[] = $callback;
@@ -177,7 +177,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function after($callback)
+    public function after($callback): Route
     {
         $callbacks = $this->getOption('_after_middlewares');
         $callbacks[] = $callback;
@@ -193,7 +193,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function when($condition)
+    public function when(string $condition): Route
     {
         $this->setCondition($condition);
 

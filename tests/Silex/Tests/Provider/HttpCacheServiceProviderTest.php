@@ -48,7 +48,7 @@ class HttpCacheServiceProviderTest extends TestCase
             $finished = true;
         });
 
-        $app->get('/', function () use ($app) {
+        $app->get('/', function () {
             return new UnsendableResponse('will do something after finish');
         });
 
