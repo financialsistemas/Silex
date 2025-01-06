@@ -15,14 +15,17 @@ use DateTimeZone;
 use Exception;
 use PHPUnit\Framework\TestCase;
 use Silex\Application;
+use Silex\Provider\AssetServiceProvider;
 use Silex\Provider\CsrfServiceProvider;
 use Silex\Provider\FormServiceProvider;
 use Silex\Provider\TwigServiceProvider;
-use Silex\Provider\AssetServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\WebLink\Link;
-use Twig\Loader\LoaderInterface;
 use Twig\Environment as TwigEnvironment;
+use Twig\Loader\LoaderInterface;
+use Twig\Loader\FilesystemLoader;
+use Twig\Extension\CoreExtension;
+
 /**
  * TwigProvider test cases.
  *
@@ -56,7 +59,7 @@ class TwigServiceProviderTest extends TestCase
         $app->register(new TwigServiceProvider(), [
             'twig.templates' => ['foo' => 'foo'],
         ]);
-        $loader = $this->getMockBuilder(LoaderInterface::class)->getMock();
+        $loader = $this->getMockBuilder(FilesystemLoader::class)->getMock();
         if (method_exists(LoaderInterface::class, 'getSourceContext')) {
             $loader->expects($this->never())->method('getSourceContext');
         }
@@ -144,9 +147,9 @@ class TwigServiceProviderTest extends TestCase
 
         $twig = $app['twig'];
 
-        $this->assertSame(['Y-m-d', '%h hours'], $twig->getExtension('Twig_Extension_Core')->getDateFormat());
-        $this->assertSame($timezone, $twig->getExtension('Twig_Extension_Core')->getTimezone());
-        $this->assertSame([2, ',', ' '], $twig->getExtension('Twig_Extension_Core')->getNumberFormat());
+        $this->assertSame(['Y-m-d', '%h hours'], $twig->getExtension(CoreExtension::class)->getDateFormat());
+        $this->assertSame($timezone, $twig->getExtension(CoreExtension::class)->getTimezone());
+        $this->assertSame([2, ',', ' '], $twig->getExtension(CoreExtension::class)->getNumberFormat());
     }
 
     public function testWebLinkIntegration()

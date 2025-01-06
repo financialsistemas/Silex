@@ -14,9 +14,6 @@ namespace Silex\Provider;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
 use Silex\Api\EventListenerProviderInterface;
-use Symfony\Component\Console\ConsoleEvents;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\HttpKernel\KernelEvents;
 use Swift_Events_SimpleEventDispatcher;
 use Swift_Mailer;
 use Swift_MemorySpool;
@@ -30,6 +27,9 @@ use Swift_Transport_Esmtp_AuthHandler;
 use Swift_Transport_EsmtpTransport;
 use Swift_Transport_SpoolTransport;
 use Swift_Transport_StreamBuffer;
+use Symfony\Component\Console\ConsoleEvents;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
  * Swiftmailer Provider.
@@ -134,7 +134,7 @@ class SwiftmailerServiceProvider implements ServiceProviderInterface, EventListe
 
     public function subscribe(Container $app, EventDispatcherInterface $dispatcher)
     {
-        // Event has no typehint as it can be either a PostResponseEvent or a ConsoleTerminateEvent
+        // Event has no typehint as it can be either a TerminateEvent or a ConsoleTerminateEvent
         $onTerminate = function ($event) use ($app) {
             // To speed things up (by avoiding Swift Mailer initialization), flush
             // messages only if our mailer has been created (potentially used)

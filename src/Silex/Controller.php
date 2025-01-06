@@ -11,6 +11,7 @@
 
 namespace Silex;
 
+use BadMethodCallException;
 use Silex\Exception\ControllerFrozenException;
 
 /**
@@ -60,9 +61,9 @@ class Controller
     /**
      * Gets the controller's route name.
      *
-     * @return string
+     * @return string|null
      */
-    public function getRouteName(): string
+    public function getRouteName(): ?string
     {
         return $this->routeName;
     }
@@ -88,7 +89,7 @@ class Controller
     public function __call($method, $arguments)
     {
         if (!method_exists($this->route, $method)) {
-            throw new \BadMethodCallException(sprintf('Method "%s::%s" does not exist.', get_class($this->route), $method));
+            throw new BadMethodCallException(sprintf('Method "%s::%s" does not exist.', get_class($this->route), $method));
         }
 
         call_user_func_array([$this->route, $method], $arguments);

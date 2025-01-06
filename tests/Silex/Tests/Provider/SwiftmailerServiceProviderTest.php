@@ -90,7 +90,7 @@ class SwiftmailerServiceProviderTest extends TestCase
             return new SpoolStub();
         };
 
-        $app->get('/', function () use ($app) { });
+        $app->get('/', function () { });
 
         $request = Request::create('/');
         $response = $app->handle($request);

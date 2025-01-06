@@ -14,8 +14,8 @@ namespace Silex\Tests\Provider;
 use Exception;
 use PHPUnit\Framework\TestCase;
 use Silex\Application;
-use Silex\Provider\TranslationServiceProvider;
 use Silex\Provider\LocaleServiceProvider;
+use Silex\Provider\TranslationServiceProvider;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
 

@@ -26,9 +26,9 @@ trait TranslationTrait
      * @param string $domain     The domain for the message
      * @param string|null $locale     The locale
      *
-     * @return string The translated string
+     * @return string|null The translated string
      */
-    public function trans(string $id, array $parameters = [], string $domain = 'messages', string $locale = null): string
+    public function trans(string $id, array $parameters = [], string $domain = 'messages', string $locale = null): ?string
     {
         return $this['translator']->trans($id, $parameters, $domain, $locale);
     }

@@ -15,7 +15,7 @@ use Silex\Application;
 
 class Php7Controller
 {
-    public function typehintedAction(Application $application, string $name)
+    public function typehintedAction(Application $application, string $name): string
     {
         return 'Hello '.$application->escape($name).' in '.get_class($application);
     }

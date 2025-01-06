@@ -11,6 +11,7 @@
 
 namespace Silex;
 
+use Closure;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionFunction;
@@ -32,8 +33,8 @@ class ViewListenerWrapper
     /**
      * Constructor.
      *
-     * @param Application $app      An Application instance
-     * @param mixed       $callback
+     * @param Application $app An Application instance
+     * @param mixed $callback
      */
     public function __construct(Application $app, $callback)
     {
@@ -69,7 +70,7 @@ class ViewListenerWrapper
     {
         if (is_array($callback)) {
             $callbackReflection = new ReflectionMethod($callback[0], $callback[1]);
-        } elseif (is_object($callback) && !$callback instanceof \Closure) {
+        } elseif (is_object($callback) && !$callback instanceof Closure) {
             $callbackReflection = new ReflectionObject($callback);
             $callbackReflection = $callbackReflection->getMethod('__invoke');
         } else {

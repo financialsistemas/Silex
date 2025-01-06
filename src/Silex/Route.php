@@ -44,11 +44,11 @@ class Route extends BaseRoute
     /**
      * Sets the route code that should be executed when matched.
      *
-     * @param callable $to PHP callback that returns the response when matched
+     * @param callable|null $to PHP callback that returns the response when matched
      *
      * @return Route $this The current Route instance
      */
-    public function run(callable $to): Route
+    public function run(?callable $to): Route
     {
         $this->setDefault('_controller', $to);
 

@@ -26,9 +26,9 @@ trait SwiftmailerTrait
      * @param Swift_Message $message          A \Swift_Message instance
      * @param array|null $failedRecipients An array of failures by-reference
      *
-     * @return int The number of sent messages
+     * @return int|null The number of sent messages
      */
-    public function mail(Swift_Message $message, array &$failedRecipients = null): int
+    public function mail(Swift_Message $message, array &$failedRecipients = null): ?int
     {
         return $this['mailer']->send($message, $failedRecipients);
     }

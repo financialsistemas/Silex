@@ -51,7 +51,7 @@ class LogListenerTest extends TestCase
 
         $dispatcher->dispatch(new RequestEvent($kernel, Request::create('/subrequest'), HttpKernelInterface::SUB_REQUEST), KernelEvents::REQUEST, 'Skip sub requests');
 
-        $dispatcher->dispatch(new RequestEvent($kernel, Request::create('/foo'), HttpKernelInterface::MASTER_REQUEST), KernelEvents::REQUEST, 'Log master requests');
+        $dispatcher->dispatch(new RequestEvent($kernel, Request::create('/foo'), HttpKernelInterface::MAIN_REQUEST), KernelEvents::REQUEST, 'Log master requests');
     }
 
     public function testResponseListener()
@@ -69,9 +69,9 @@ class LogListenerTest extends TestCase
         /** @var HttpKernelInterface&MockObject $kernel */
         $kernel = $this->getMockBuilder('Symfony\\Component\\HttpKernel\\HttpKernelInterface')->getMock();
 
-        $dispatcher->dispatch(new ResponseEvent($kernel, Request::create('/foo'), HttpKernelInterface::SUB_REQUEST, Response::create('subrequest')), KernelEvents::RESPONSE, 'Skip sub requests');
+        $dispatcher->dispatch(new ResponseEvent($kernel, Request::create('/foo'), HttpKernelInterface::SUB_REQUEST, new Response('subrequest', 200)), KernelEvents::RESPONSE);
 
-        $dispatcher->dispatch(new ResponseEvent($kernel, Request::create('/foo'), HttpKernelInterface::MASTER_REQUEST, Response::create('bar', 301)), KernelEvents::RESPONSE, 'Log master requests');
+        $dispatcher->dispatch(new ResponseEvent($kernel, Request::create('/foo'), HttpKernelInterface::MAIN_REQUEST, new Response('bar', 301)), KernelEvents::RESPONSE);
     }
 
     public function testExceptionListener()
@@ -81,11 +81,9 @@ class LogListenerTest extends TestCase
         $logger
             ->expects($this->exactly(2))
             ->method('log')
-            ->with(
-                $this->logicalOr(
-                    $this->equalTo([LogLevel::CRITICAL, 'RuntimeException: Fatal error (uncaught exception) at '.__FILE__.' line '.(__LINE__ + 11)]),
-                    $this->equalTo([LogLevel::ERROR, 'Symfony\Component\HttpKernel\Exception\HttpException: Http error (uncaught exception) at '.__FILE__.' line '.(__LINE__ + 11)])
-                )
+            ->withConsecutive(
+                [LogLevel::CRITICAL, 'RuntimeException: Fatal error (uncaught exception) at '.__FILE__.' line '.(__LINE__ + 10)],
+                [LogLevel::ERROR, 'Symfony\Component\HttpKernel\Exception\HttpException: Http error (uncaught exception) at '.__FILE__.' line '.(__LINE__ + 10)]
             );
 
         $dispatcher = new EventDispatcher();

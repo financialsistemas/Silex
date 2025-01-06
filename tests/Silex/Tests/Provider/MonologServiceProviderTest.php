@@ -13,10 +13,10 @@ namespace Silex\Tests\Provider;
 
 use Exception;
 use InvalidArgumentException;
-use PHPUnit\Framework\TestCase;
 use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
+use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Silex\Application;
 use Silex\Provider\MonologServiceProvider;
@@ -52,7 +52,7 @@ class MonologServiceProviderTest extends TestCase
     {
         $app = $this->getApplication();
 
-        $app->get('/foo', function () use ($app) {
+        $app->get('/foo', function () {
             return 'foo';
         });
 
@@ -77,7 +77,7 @@ class MonologServiceProviderTest extends TestCase
         $app = $this->getApplication();
 
         $app->get('/log', function () use ($app) {
-            $app['monolog']->addDebug('logging a message');
+            $app['monolog']->debug('logging a message');
         });
 
         $this->assertFalse($app['monolog.handler']->hasDebugRecords());
@@ -119,7 +119,7 @@ class MonologServiceProviderTest extends TestCase
         $request = Request::create('/error');
         $app->handle($request);
 
-        $pattern = "#Symfony\\\\Component\\\\HttpKernel\\\\Exception\\\\NotFoundHttpException: No route found for \"GET /error\" \(uncaught exception\) at .* line \d+#";
+        $pattern = "#Symfony\\\\Component\\\\HttpKernel\\\\Exception\\\\NotFoundHttpException: No route found for \"GET http://localhost/error\" \(uncaught exception\) at .* line \d+#";
         $this->assertMatchingRecord($pattern, Logger::ERROR, $app['monolog.handler']);
 
         /*
@@ -145,7 +145,7 @@ class MonologServiceProviderTest extends TestCase
     {
         $app = $this->getApplication();
 
-        $app->get('/foo', function () use ($app) {
+        $app->get('/foo', function () {
             return new RedirectResponse('/bar', 302);
         });
 
@@ -223,7 +223,7 @@ class MonologServiceProviderTest extends TestCase
     public function testExceptionFiltering()
     {
         $app = new Application();
-        $app->get('/foo', function () use ($app) {
+        $app->get('/foo', function () {
             throw new NotFoundHttpException();
         });
 

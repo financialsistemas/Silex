@@ -41,7 +41,7 @@ class ExceptionHandlerTest extends TestCase
 
         $request = Request::create('/foo');
         $response = $app->handle($request);
-        $this->assertStringContainsString('Oops! An Error Occurred', $response->getContent());
+        $this->assertStringContainsString('The server returned a "500 Internal Server Error".', $response->getContent());
         $this->assertEquals(500, $response->getStatusCode());
     }
 
@@ -74,7 +74,7 @@ class ExceptionHandlerTest extends TestCase
 
         $request = Request::create('/foo');
         $response = $app->handle($request);
-        $this->assertStringContainsString('Sorry, the page you are looking for could not be found.', $response->getContent());
+        $this->assertStringContainsString('The server returned a "404 Not Found".', $response->getContent());
         $this->assertEquals(404, $response->getStatusCode());
     }
 
@@ -104,7 +104,7 @@ class ExceptionHandlerTest extends TestCase
 
         $request = Request::create('/foo', 'POST');
         $response = $app->handle($request);
-        $this->assertStringContainsString('Whoops, looks like something went wrong.', $response->getContent());
+        $this->assertStringContainsString('The server returned a "405 Method Not Allowed".', $response->getContent());
         $this->assertEquals(405, $response->getStatusCode());
         $this->assertEquals('GET', $response->headers->get('Allow'));
     }
@@ -121,7 +121,8 @@ class ExceptionHandlerTest extends TestCase
 
         $request = Request::create('/foo', 'POST');
         $response = $app->handle($request);
-        $this->assertStringContainsString('No route found for "POST /foo": Method Not Allowed (Allow: GET)', html_entity_decode($response->getContent()));
+        $this->assertStringContainsString('No route found for "POST', html_entity_decode($response->getContent()));
+        $this->assertStringContainsString('Method Not Allowed (Allow: GET)', html_entity_decode($response->getContent()));
         $this->assertEquals(405, $response->getStatusCode());
         $this->assertEquals('GET', $response->headers->get('Allow'));
     }

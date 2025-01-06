@@ -32,20 +32,26 @@ class LocaleTest extends TestCase
     {
         $app = new Application();
         $app->register(new LocaleServiceProvider());
-        $app->get('/', function (Request $request) { return $request->getLocale(); });
+        $app->get('/', function (Request $request) {
+            return $request->getLocale();
+        });
         $response = $app->handle(Request::create('/'));
         $this->assertEquals('en', $response->getContent());
 
         $app = new Application();
         $app->register(new LocaleServiceProvider());
         $app['locale'] = 'fr';
-        $app->get('/', function (Request $request) { return $request->getLocale(); });
+        $app->get('/', function (Request $request) {
+            return $request->getLocale();
+        });
         $response = $app->handle(Request::create('/'));
         $this->assertEquals('fr', $response->getContent());
 
         $app = new Application();
         $app->register(new LocaleServiceProvider());
-        $app->get('/{_locale}', function (Request $request) { return $request->getLocale(); });
+        $app->get('/{_locale}', function (Request $request) {
+            return $request->getLocale();
+        });
         $response = $app->handle(Request::create('/es'));
         $this->assertEquals('es', $response->getContent());
     }
@@ -57,18 +63,22 @@ class LocaleTest extends TestCase
     {
         $app = new Application();
         $app->register(new LocaleServiceProvider());
-        $app->get('/embed/{_locale}', function (Request $request) { return $request->getLocale(); });
+        $app->get('/embed/{_locale}', function (Request $request) {
+            return $request->getLocale();
+        });
         $app->get('/{_locale}', function (Request $request) use ($app) {
-            return $request->getLocale().$app->handle(Request::create('/embed/es'), HttpKernelInterface::SUB_REQUEST)->getContent().$request->getLocale();
+            return $request->getLocale() . $app->handle(Request::create('/embed/es'), HttpKernelInterface::SUB_REQUEST)->getContent() . $request->getLocale();
         });
         $response = $app->handle(Request::create('/fr'));
         $this->assertEquals('fresfr', $response->getContent());
 
         $app = new Application();
         $app->register(new LocaleServiceProvider());
-        $app->get('/embed', function (Request $request) { return $request->getLocale(); });
+        $app->get('/embed', function (Request $request) {
+            return $request->getLocale();
+        });
         $app->get('/{_locale}', function (Request $request) use ($app) {
-            return $request->getLocale().$app->handle(Request::create('/embed'), HttpKernelInterface::SUB_REQUEST)->getContent().$request->getLocale();
+            return $request->getLocale() . $app->handle(Request::create('/embed'), HttpKernelInterface::SUB_REQUEST)->getContent() . $request->getLocale();
         });
         $response = $app->handle(Request::create('/fr'));
         // locale in sub-request must be "en" as this is the value if the sub-request is converted to an ESI
@@ -82,10 +92,14 @@ class LocaleTest extends TestCase
     {
         $app = new Application();
         $app->register(new LocaleServiceProvider());
-        $app->before(function (Request $request) use ($app) { $request->setLocale('fr'); });
-        $app->get('/embed', function (Request $request) { return $request->getLocale(); });
+        $app->before(function (Request $request) {
+            $request->setLocale('fr');
+        });
+        $app->get('/embed', function (Request $request) {
+            return $request->getLocale();
+        });
         $app->get('/', function (Request $request) use ($app) {
-            return $request->getLocale().$app->handle(Request::create('/embed'), HttpKernelInterface::SUB_REQUEST)->getContent().$request->getLocale();
+            return $request->getLocale() . $app->handle(Request::create('/embed'), HttpKernelInterface::SUB_REQUEST)->getContent() . $request->getLocale();
         });
         $response = $app->handle(Request::create('/'));
         // locale in sub-request is "en" as the before filter is only executed for the main request

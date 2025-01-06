@@ -57,8 +57,8 @@ abstract class WebTestCase extends TestCase
      */
     public function createClient(array $server = []): HttpKernelBrowser
     {
-        if (!class_exists('Symfony\Component\BrowserKit\Client')) {
-            throw new LogicException('Component "symfony/browser-kit" is required by WebTestCase.'.PHP_EOL.'Run composer require symfony/browser-kit');
+        if (!class_exists('Symfony\Component\HttpKernel\HttpKernelBrowser')) {
+            throw new LogicException('Component "symfony/http-kernel" is required by WebTestCase.'.PHP_EOL.'Run composer require symfony/http-kernel');
         }
 
         return new HttpKernelBrowser($this->app, $server);

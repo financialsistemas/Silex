@@ -11,8 +11,9 @@
 
 namespace Silex\Provider\HttpCache;
 
-use Symfony\Component\HttpKernel\HttpCache\HttpCache as BaseHttpCache;
+use Exception;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\HttpCache\HttpCache as BaseHttpCache;
 
 /**
  * HTTP Cache extension to allow using the run() shortcut.
@@ -24,7 +25,8 @@ class HttpCache extends BaseHttpCache
     /**
      * Handles the Request and delivers the Response.
      *
-     * @param Request $request The Request object
+     * @param Request|null $request The Request object
+     * @throws Exception
      */
     public function run(Request $request = null)
     {

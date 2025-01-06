@@ -27,9 +27,8 @@ class SessionListener extends BaseSessionListener
 
     public function __construct(Container $app)
     {
-        parent::__construct(new Psr11Container($app));
-
         $this->app = $app;
+        parent::__construct(new Psr11Container($app));
     }
 
     protected function getSession(): ?SessionInterface

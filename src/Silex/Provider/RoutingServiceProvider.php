@@ -13,15 +13,15 @@ namespace Silex\Provider;
 
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
-use Silex\ControllerCollection;
 use Silex\Api\EventListenerProviderInterface;
-use Silex\Provider\Routing\RedirectableUrlMatcher;
+use Silex\ControllerCollection;
 use Silex\Provider\Routing\LazyRequestMatcher;
-use Symfony\Component\Routing\RouteCollection;
+use Silex\Provider\Routing\RedirectableUrlMatcher;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpKernel\EventListener\RouterListener;
 use Symfony\Component\Routing\Generator\UrlGenerator;
 use Symfony\Component\Routing\RequestContext;
-use Symfony\Component\HttpKernel\EventListener\RouterListener;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Routing\RouteCollection;
 
 /**
  * Symfony Routing component Provider.

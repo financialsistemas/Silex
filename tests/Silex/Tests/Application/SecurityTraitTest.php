@@ -14,9 +14,8 @@ namespace Silex\Tests\Application;
 use Exception;
 use PHPUnit\Framework\TestCase;
 use Silex\Provider\SecurityServiceProvider;
-use Symfony\Component\Security\Core\Exception\AuthenticationCredentialsNotFoundException;
-use Symfony\Component\Security\Core\User\User;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\User\InMemoryUser as User;
 
 /**
  * @author Fabien Potencier <fabien@symfony.com>
@@ -43,7 +42,7 @@ class SecurityTraitTest extends TestCase
      */
     public function testIsGrantedWithoutTokenThrowsException()
     {
-        $this->expectException(AuthenticationCredentialsNotFoundException::class);
+        $this->expectExceptionMessage('The token storage contains no authentication token. One possible reason may be that there is no firewall configured for this URL.');
 
         $app = $this->createApplication();
         $app->get('/', function () { return 'foo'; });

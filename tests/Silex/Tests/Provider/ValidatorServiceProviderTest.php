@@ -13,13 +13,13 @@ namespace Silex\Tests\Provider;
 
 use PHPUnit\Framework\TestCase;
 use Silex\Application;
+use Silex\Provider\FormServiceProvider;
 use Silex\Provider\TranslationServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
-use Silex\Provider\FormServiceProvider;
-use Symfony\Component\Translation\Exception\NotFoundResourceException;
-use Symfony\Component\Validator\Constraints as Assert;
 use Silex\Tests\Provider\ValidatorServiceProviderTest\Constraint\Custom;
 use Silex\Tests\Provider\ValidatorServiceProviderTest\Constraint\CustomValidator;
+use Symfony\Component\Translation\Exception\NotFoundResourceException;
+use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
@@ -198,6 +198,6 @@ class ValidatorServiceProviderTest extends TestCase
         $app->register(new ValidatorServiceProvider());
         $app->register(new TranslationServiceProvider());
 
-        $this->assertIsArray('array', $app['translator.resources']);
+        $this->assertIsArray($app['translator.resources']);
     }
 }

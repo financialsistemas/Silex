@@ -27,8 +27,7 @@ class SwiftmailerTraitTest extends TestCase
         $app['mailer'] = $mailer = $this->getMockBuilder('Swift_Mailer')->disableOriginalConstructor()->getMock();
         $mailer->expects($this->once())
                ->method('send')
-               ->with($message)
-        ;
+               ->with($message);
 
         $app->mail($message);
     }

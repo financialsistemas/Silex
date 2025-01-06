@@ -15,14 +15,15 @@ use PHPUnit\Framework\TestCase;
 use ReflectionException;
 use ReflectionMethod;
 use Silex\Application;
-use Silex\Provider\FormServiceProvider;
 use Silex\Provider\CsrfServiceProvider;
+use Silex\Provider\FormServiceProvider;
 use Silex\Provider\SessionServiceProvider;
 use Silex\Provider\TranslationServiceProvider;
 use Silex\Provider\ValidatorServiceProvider;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\AbstractTypeExtension;
 use Symfony\Component\Form\Exception\InvalidArgumentException;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\FormTypeGuesserChain;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -89,7 +90,7 @@ class FormServiceProviderTest extends TestCase
     public function testNonExistentTypeService()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid form type. The silex service \"dummy\" does not exist.');
+        $this->expectExceptionMessage('Invalid form type. The silex service "dummy" does not exist.');
 
         $app = new Application();
 
@@ -194,6 +195,7 @@ class FormServiceProviderTest extends TestCase
         $app['dummy.form.type.guesser'] = function () {
             return new FormTypeGuesserChain([]);
         };
+
         $app->extend('form.type.guessers', function ($guessers) {
             $guessers[] = 'dummy.form.type.guesser';
 
@@ -206,7 +208,7 @@ class FormServiceProviderTest extends TestCase
     public function testNonExistentTypeGuesserService()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage("Invalid form type guesser. The silex service \"dummy.form.type.guesser\" does not exist.");
+        $this->expectExceptionMessage('Invalid form type guesser. The silex service "dummy.form.type.guesser" does not exist.');
 
         $app = new Application();
 
@@ -254,7 +256,7 @@ class FormServiceProviderTest extends TestCase
             $this->assertStringContainsString('ERROR: German translation', $form->getErrorsAsString());
         } else {
             // as of 2.5
-            $this->assertStringContainsString('ERROR: German translation', (string) $form->getErrors(true, false));
+            $this->assertStringContainsString('ERROR: German translation', (string)$form->getErrors(true, false));
         }
     }
 
@@ -321,7 +323,7 @@ class DummyFormTypeExtension extends AbstractTypeExtension
 {
     public static function getExtendedTypes(): iterable
     {
-        return ['Symfony\Component\Form\Extension\Core\Type\FileType'];
+        return [FileType::class];
     }
 
     public function configureOptions(OptionsResolver $resolver)

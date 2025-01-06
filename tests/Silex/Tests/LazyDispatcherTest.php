@@ -11,14 +11,17 @@
 
 namespace Silex\Tests;
 
+use Exception;
 use PHPUnit\Framework\TestCase;
 use Silex\Application;
 use Symfony\Component\HttpFoundation\Request;
 
 class LazyDispatcherTest extends TestCase
 {
-    /** @test */
-    public function beforeMiddlewareShouldNotCreateDispatcherEarly()
+    /** @test
+     * @throws Exception
+     */
+    public function testBeforeMiddlewareShouldNotCreateDispatcherEarly()
     {
         $dispatcherCreated = false;
 
@@ -39,8 +42,10 @@ class LazyDispatcherTest extends TestCase
         $this->assertTrue($dispatcherCreated);
     }
 
-    /** @test */
-    public function eventHelpersShouldDirectlyAddListenersAfterBoot()
+    /** @test
+     * @throws Exception
+     */
+    public function testEventHelpersShouldDirectlyAddListenersAfterBoot()
     {
         $app = new Application();
 

@@ -62,7 +62,7 @@ class AssetServiceProvider implements ServiceProviderInterface
 
         // prototypes
 
-        $app['assets.strategy_factory'] = $app->protect(function ($version, $format, $jsonManifestPath, $name) use ($app) {
+        $app['assets.strategy_factory'] = $app->protect(function ($version, $format, $jsonManifestPath, $name) {
             if ($version && $jsonManifestPath) {
                 throw new LogicException(sprintf('Asset package "%s" cannot have version and manifest.', $name));
             }

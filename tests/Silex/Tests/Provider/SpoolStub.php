@@ -11,7 +11,7 @@
 
 namespace Silex\Tests\Provider;
 
-use Swift_Mime_Message;
+use Swift_Mime_SimpleMessage;
 use Swift_Spool;
 use Swift_Transport;
 
@@ -38,7 +38,7 @@ class SpoolStub implements Swift_Spool
         return count($this->messages) > 0;
     }
 
-    public function queueMessage(Swift_Mime_Message $message)
+    public function queueMessage(Swift_Mime_SimpleMessage $message)
     {
         $this->messages[] = clone $message;
     }

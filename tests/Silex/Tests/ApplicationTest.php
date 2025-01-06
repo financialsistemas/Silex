@@ -265,7 +265,7 @@ class ApplicationTest extends TestCase
             $test->assertEquals('/reached', $request->getRequestUri());
             $middlewareTarget[] = 'before_middleware2_triggered';
         };
-        $beforeMiddleware3 = function (Request $request) use (&$middlewareTarget, $test) {
+        $beforeMiddleware3 = function (Request $request) use (&$middlewareTarget) {
             throw new Exception('This middleware shouldn\'t run!');
         };
 
@@ -277,7 +277,7 @@ class ApplicationTest extends TestCase
             $test->assertEquals('/reached', $request->getRequestUri());
             $middlewareTarget[] = 'after_middleware2_triggered';
         };
-        $afterMiddleware3 = function (Request $request, Response $response) use (&$middlewareTarget, $test) {
+        $afterMiddleware3 = function (Request $request, Response $response) use (&$middlewareTarget) {
             throw new Exception('This middleware shouldn\'t run!');
         };
 
@@ -464,7 +464,7 @@ class ApplicationTest extends TestCase
         })
         ->before($middleware);
 
-        $app->handle(Request::create('/'), HttpKernelInterface::MASTER_REQUEST, false);
+        $app->handle(Request::create('/'), HttpKernelInterface::MAIN_REQUEST, false);
     }
 
     /**
@@ -485,7 +485,7 @@ class ApplicationTest extends TestCase
         })
         ->after($middleware);
 
-        $app->handle(Request::create('/'), HttpKernelInterface::MASTER_REQUEST, false);
+        $app->handle(Request::create('/'), HttpKernelInterface::MAIN_REQUEST, false);
     }
 
     /**

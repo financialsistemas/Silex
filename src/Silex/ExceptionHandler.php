@@ -12,6 +12,7 @@
 namespace Silex;
 
 use Symfony\Component\ErrorHandler\ErrorRenderer\HtmlErrorRenderer;
+use Symfony\Component\ErrorHandler\Exception\FlattenException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
@@ -33,11 +34,15 @@ class ExceptionHandler implements EventSubscriberInterface
 
     public function onSilexError(ExceptionEvent $event)
     {
-        $renderer = new HtmlErrorRenderer($this->debug);
-        $exception = $renderer->render($event->getThrowable());
+        $handler = new HtmlErrorRenderer($this->debug);
 
-        $response = Response::create($exception->getAsString(), $exception->getStatusCode(), $exception->getHeaders())
-            ->setCharset(ini_get('default_charset'));
+        $exception = $event->getThrowable();
+        if (!$exception instanceof FlattenException) {
+            $exception = FlattenException::createFromThrowable($exception);
+        }
+
+        $response = new Response($handler->getBody($exception), $exception->getStatusCode(), $exception->getHeaders());
+        $response->setCharset(ini_get('default_charset'));
 
         $event->setResponse($response);
     }

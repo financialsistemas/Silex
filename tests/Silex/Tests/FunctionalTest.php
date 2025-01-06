@@ -14,8 +14,8 @@ namespace Silex\Tests;
 use Exception;
 use PHPUnit\Framework\TestCase;
 use Silex\Application;
-use Silex\Route;
 use Silex\ControllerCollection;
+use Silex\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -33,12 +33,12 @@ class FunctionalTest extends TestCase
         $app->get('/', function () {
             return 'hello';
         })
-        ->bind('homepage');
+            ->bind('homepage');
 
         $app->get('/foo', function () {
             return 'foo';
         })
-        ->bind('foo_abc');
+            ->bind('foo_abc');
 
         $app->flush();
         $routes = $app['routes'];
@@ -52,7 +52,9 @@ class FunctionalTest extends TestCase
     public function testMount()
     {
         $mounted = new ControllerCollection(new Route());
-        $mounted->get('/{name}', function ($name) { return new Response($name); });
+        $mounted->get('/{name}', function ($name) {
+            return new Response($name);
+        });
 
         $app = new Application();
         $app->mount('/hello', $mounted);

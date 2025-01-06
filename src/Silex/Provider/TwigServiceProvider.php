@@ -18,23 +18,25 @@ use Silex\Provider\Twig\RuntimeLoader;
 use Symfony\Bridge\Twig\AppVariable;
 use Symfony\Bridge\Twig\Extension\AssetExtension;
 use Symfony\Bridge\Twig\Extension\DumpExtension;
-use Symfony\Bridge\Twig\Extension\RoutingExtension;
-use Symfony\Bridge\Twig\Extension\TranslationExtension;
 use Symfony\Bridge\Twig\Extension\FormExtension;
-use Symfony\Bridge\Twig\Extension\SecurityExtension;
 use Symfony\Bridge\Twig\Extension\HttpFoundationExtension;
 use Symfony\Bridge\Twig\Extension\HttpKernelExtension;
+use Symfony\Bridge\Twig\Extension\HttpKernelRuntime;
+use Symfony\Bridge\Twig\Extension\RoutingExtension;
+use Symfony\Bridge\Twig\Extension\SecurityExtension;
+use Symfony\Bridge\Twig\Extension\TranslationExtension;
 use Symfony\Bridge\Twig\Extension\WebLinkExtension;
 use Symfony\Bridge\Twig\Form\TwigRendererEngine;
-use Symfony\Bridge\Twig\Extension\HttpKernelRuntime;
 use Symfony\Component\Form\FormRenderer;
 use Symfony\Component\HttpFoundation\UrlHelper;
+use Symfony\Component\HttpKernel\Fragment\HIncludeFragmentRenderer;
 use Twig\Environment as TwigEnvironment;
 use Twig\Extension\CoreExtension;
 use Twig\Extension\DebugExtension;
 use Twig\Loader\ArrayLoader;
 use Twig\Loader\ChainLoader;
 use Twig\Loader\FilesystemLoader;
+
 
 /**
  * Twig integration for Silex.
@@ -80,18 +82,20 @@ class TwigServiceProvider implements ServiceProviderInterface
             }
 
             if (class_exists('Symfony\Bridge\Twig\Extension\RoutingExtension')) {
-                $app['twig.app_variable'] = function ($app) {
-                    $var = new AppVariable();
-                    if (isset($app['security.token_storage'])) {
-                        $var->setTokenStorage($app['security.token_storage']);
-                    }
-                    if (isset($app['request_stack'])) {
-                        $var->setRequestStack($app['request_stack']);
-                    }
-                    $var->setDebug($app['debug']);
+                if (!isset($app['twig.app_variable'])) {
+                    $app['twig.app_variable'] = function ($app) {
+                        $var = new AppVariable();
+                        if (isset($app['security.token_storage'])) {
+                            $var->setTokenStorage($app['security.token_storage']);
+                        }
+                        if (isset($app['request_stack'])) {
+                            $var->setRequestStack($app['request_stack']);
+                        }
+                        $var->setDebug($app['debug']);
 
-                    return $var;
-                };
+                        return $var;
+                    };
+                }
 
                 $twig->addGlobal('global', $app['twig.app_variable']);
 
@@ -109,7 +113,11 @@ class TwigServiceProvider implements ServiceProviderInterface
                 }
 
                 if (isset($app['fragment.handler'])) {
-                    $app['fragment.renderer.hinclude']->setTemplating($twig);
+                    $app['fragment.renderer.hinclude'] = function ($app) {
+                        $renderer = new HIncludeFragmentRenderer($app['twig'], $app['uri_signer'], $app['fragment.renderer.hinclude.global_template'], $app['charset']);
+                        $renderer->setFragmentPath($app['fragment.path']);
+                        return $renderer;
+                    };
 
                     $twig->addExtension(new HttpKernelExtension());
                 }

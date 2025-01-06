@@ -17,8 +17,8 @@ use Silex\Api\EventListenerProviderInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Security\Core\Authentication\Provider\RememberMeAuthenticationProvider;
 use Symfony\Component\Security\Http\Firewall\RememberMeListener;
-use Symfony\Component\Security\Http\RememberMe\TokenBasedRememberMeServices;
 use Symfony\Component\Security\Http\RememberMe\ResponseListener;
+use Symfony\Component\Security\Http\RememberMe\TokenBasedRememberMeServices;
 
 /**
  * Remember-me authentication for the SecurityServiceProvider.
@@ -42,21 +42,21 @@ class RememberMeServiceProvider implements ServiceProviderInterface, EventListen
                 $options['key'] = $name;
             }
 
-            if (!isset($app['security.remember_me.service.'.$name])) {
-                $app['security.remember_me.service.'.$name] = $app['security.remember_me.service._proto']($name, $options);
+            if (!isset($app['security.remember_me.service.' . $name])) {
+                $app['security.remember_me.service.' . $name] = $app['security.remember_me.service._proto']($name, $options);
             }
 
-            if (!isset($app['security.authentication_listener.'.$name.'.remember_me'])) {
-                $app['security.authentication_listener.'.$name.'.remember_me'] = $app['security.authentication_listener.remember_me._proto']($name, $options);
+            if (!isset($app['security.authentication_listener.' . $name . '.remember_me'])) {
+                $app['security.authentication_listener.' . $name . '.remember_me'] = $app['security.authentication_listener.remember_me._proto']($name, $options);
             }
 
-            if (!isset($app['security.authentication_provider.'.$name.'.remember_me'])) {
-                $app['security.authentication_provider.'.$name.'.remember_me'] = $app['security.authentication_provider.remember_me._proto']($name, $options);
+            if (!isset($app['security.authentication_provider.' . $name . '.remember_me'])) {
+                $app['security.authentication_provider.' . $name . '.remember_me'] = $app['security.authentication_provider.remember_me._proto']($name, $options);
             }
 
             return [
-                'security.authentication_provider.'.$name.'.remember_me',
-                'security.authentication_listener.'.$name.'.remember_me',
+                'security.authentication_provider.' . $name . '.remember_me',
+                'security.authentication_listener.' . $name . '.remember_me',
                 null, // entry point
                 'remember_me',
             ];
@@ -75,7 +75,7 @@ class RememberMeServiceProvider implements ServiceProviderInterface, EventListen
                     'remember_me_parameter' => '_remember_me',
                 ], $options);
 
-                return new TokenBasedRememberMeServices([$app['security.user_provider.'.$providerKey]], $options['key'], $providerKey, $options, $app['logger']);
+                return new TokenBasedRememberMeServices([$app['security.user_provider.' . $providerKey]], $options['key'], $providerKey, $options, $app['logger']);
             };
         });
 
@@ -83,7 +83,7 @@ class RememberMeServiceProvider implements ServiceProviderInterface, EventListen
             return function () use ($app, $providerKey) {
                 $listener = new RememberMeListener(
                     $app['security.token_storage'],
-                    $app['security.remember_me.service.'.$providerKey],
+                    $app['security.remember_me.service.' . $providerKey],
                     $app['security.authentication_manager'],
                     $app['logger'],
                     $app['dispatcher']

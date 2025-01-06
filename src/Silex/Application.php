@@ -48,6 +48,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
     const VERSION = '2.3.1-DEV';
 
     const EARLY_EVENT = 512;
+    const SEMIEARLY_EVENT = 128;
     const LATE_EVENT = -512;
 
     protected $providers = [];
@@ -183,7 +184,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      *
      * @return Controller
      */
-    public function delete($pattern, $to = null)
+    public function delete(string $pattern, $to = null): Controller
     {
         return $this['controllers']->delete($pattern, $to);
     }
@@ -218,11 +219,11 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      * Adds an event listener that listens on the specified events.
      *
      * @param string $eventName The event to listen on
-     * @param callable $callback  The listener
+     * @param callable|string $callback  The listener
      * @param int $priority  The higher this value, the earlier an event
      *                            listener will be triggered in the chain (defaults to 0)
      */
-    public function on(string $eventName, callable $callback, int $priority = 0)
+    public function on(string $eventName, $callback, int $priority = 0)
     {
         if ($this->booted) {
             $this['dispatcher']->addListener($eventName, $this['callback_resolver']->resolveCallback($callback), $priority);
@@ -251,7 +252,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
         $this->on(KernelEvents::REQUEST, function (RequestEvent $event) use ($callback) {
             $app = $this;
 
-            if (!$event->isMasterRequest()) {
+            if (!$event->isMainRequest()) {
                 return;
             }
 
@@ -277,7 +278,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
         $this->on(KernelEvents::RESPONSE, function (ResponseEvent $event) use ($callback) {
             $app = $this;
 
-            if (!$event->isMasterRequest()) {
+            if (!$event->isMainRequest()) {
                 return;
             }
 
@@ -495,7 +496,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      * If you call this method directly instead of run(), you must call the
      * terminate() method yourself if you want the finish filters to be run.
      */
-    public function handle(Request $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
+    public function handle(Request $request, $type = HttpKernelInterface::MAIN_REQUEST, $catch = true)
     {
         if (!$this->booted) {
             $this->boot();

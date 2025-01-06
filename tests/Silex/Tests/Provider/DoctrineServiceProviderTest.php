@@ -11,6 +11,7 @@
 
 namespace Silex\Tests\Provider;
 
+use PDO;
 use PHPUnit\Framework\TestCase;
 use Pimple\Container;
 use Silex\Application;
@@ -33,7 +34,7 @@ class DoctrineServiceProviderTest extends TestCase
 
     public function testSingleConnection()
     {
-        if (!in_array('sqlite', \PDO::getAvailableDrivers())) {
+        if (!in_array('sqlite', PDO::getAvailableDrivers())) {
             $this->markTestSkipped('pdo_sqlite is not available');
         }
 
@@ -54,7 +55,7 @@ class DoctrineServiceProviderTest extends TestCase
 
     public function testMultipleConnections()
     {
-        if (!in_array('sqlite', \PDO::getAvailableDrivers())) {
+        if (!in_array('sqlite', PDO::getAvailableDrivers())) {
             $this->markTestSkipped('pdo_sqlite is not available');
         }
 
@@ -83,7 +84,7 @@ class DoctrineServiceProviderTest extends TestCase
 
     public function testLoggerLoading()
     {
-        if (!in_array('sqlite', \PDO::getAvailableDrivers())) {
+        if (!in_array('sqlite', PDO::getAvailableDrivers())) {
             $this->markTestSkipped('pdo_sqlite is not available');
         }
 
@@ -101,7 +102,7 @@ class DoctrineServiceProviderTest extends TestCase
 
     public function testLoggerNotLoaded()
     {
-        if (!in_array('sqlite', \PDO::getAvailableDrivers())) {
+        if (!in_array('sqlite', PDO::getAvailableDrivers())) {
             $this->markTestSkipped('pdo_sqlite is not available');
         }
 

@@ -173,11 +173,11 @@ class RouterTest extends TestCase
     {
         $app = new Application();
 
-        $app->get('/foo', function (Request $request) use ($app) {
+        $app->get('/foo', function (Request $request) {
             return new Response($request->getRequestUri());
         });
 
-        $app->error(function ($e, Request $request, $code) use ($app) {
+        $app->error(function ($e, Request $request, $code) {
             return new Response($request->getRequestUri());
         });
 
@@ -195,7 +195,7 @@ class RouterTest extends TestCase
     {
         $app = new Application();
 
-        $app->get('/foo/', function () use ($app) {
+        $app->get('/foo/', function () {
             return new Response('ok');
         });
 
@@ -226,9 +226,9 @@ class RouterTest extends TestCase
         })
         ->requireHttp();
 
-        $request = Request::create('https://example.com/secured');
+        $request = Request::create('http://example.com/secured');
         $response = $app->handle($request);
-        $this->assertTrue($response->isRedirect('https://example.com/secured'));
+        $this->assertTrue($response->isRedirect('http://example.com/secured'));
     }
 
     /**
@@ -276,7 +276,7 @@ class RouterTest extends TestCase
         })
         ->when('request.isSecure() == true');
 
-        $request = Request::create('https://example.com/secured');
+        $request = Request::create('http://example.com/secured');
         $response = $app->handle($request);
         $this->assertEquals(404, $response->getStatusCode());
     }

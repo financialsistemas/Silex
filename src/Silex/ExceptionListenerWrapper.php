@@ -37,10 +37,10 @@ class ExceptionListenerWrapper
     /**
      * Constructor.
      *
-     * @param Application $app      An Application instance
-     * @param callable $callback
+     * @param Application $app An Application instance
+     * @param callable|string $callback
      */
-    public function __construct(Application $app, callable $callback)
+    public function __construct(Application $app, $callback)
     {
         $this->app = $app;
         $this->callback = $callback;
@@ -86,6 +86,7 @@ class ExceptionListenerWrapper
             $reflectedClass = $expectedException->getType() && !$expectedException->getType()->isBuiltin()
                 ? new ReflectionClass($expectedException->getType()->getName())
                 : null;
+
             if (null !== $reflectedClass && !$reflectedClass->isInstance($exception)) {
                 return false;
             }
