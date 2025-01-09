@@ -32,7 +32,7 @@ trait SecurityTrait
      *
      * @throws RuntimeException when no password encoder could be found for the user
      */
-    public function encodePassword(UserInterface $user, string $password): string
+    public function encodePassword(UserInterface $user, $password)
     {
         return $this['security.encoder_factory']->getEncoder($user)->encodePassword($password, $user->getSalt());
     }
@@ -47,7 +47,7 @@ trait SecurityTrait
      *
      * @throws AuthenticationCredentialsNotFoundException when the token storage has no authentication token
      */
-    public function isGranted($attributes, $object = null): bool
+    public function isGranted($attributes, $object = null)
     {
         return $this['security.authorization_checker']->isGranted($attributes, $object);
     }

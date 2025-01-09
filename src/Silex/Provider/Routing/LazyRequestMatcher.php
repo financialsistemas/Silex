@@ -36,7 +36,7 @@ class LazyRequestMatcher implements RequestMatcherInterface
      *
      * @return RequestMatcherInterface
      */
-    public function getRequestMatcher(): RequestMatcherInterface
+    public function getRequestMatcher()
     {
         $matcher = call_user_func($this->factory);
         if (!$matcher instanceof RequestMatcherInterface) {

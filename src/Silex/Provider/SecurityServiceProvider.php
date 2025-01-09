@@ -133,12 +133,12 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
             return new MessageDigestPasswordEncoder();
         };
 
-        $app['security.encoder.native'] = function ($app) {
-            return new NativePasswordEncoder();
+        $app['security.encoder.pbkdf2'] = function ($app) {
+            return new Pbkdf2PasswordEncoder();
         };
 
-        $app['security.encoder.pbkdf2'] = function () {
-            return new Pbkdf2PasswordEncoder();
+        $app['security.encoder.native'] = function ($app) {
+            return new NativePasswordEncoder();
         };
 
         $app['security.user_checker'] = function () {
@@ -190,13 +190,13 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                 $entryPoint = 'guard';
             }
 
-            $app['security.authentication_listener.factory.'.$type] = $app->protect(function ($name, $options) use ($type, $app, $entryPoint) {
-                if ($entryPoint && !isset($app['security.entry_point.'.$name.'.'.$entryPoint])) {
-                    $app['security.entry_point.'.$name.'.'.$entryPoint] = $app['security.entry_point.'.$entryPoint.'._proto']($name, $options);
+            $app['security.authentication_listener.factory.' . $type] = $app->protect(function ($name, $options) use ($type, $app, $entryPoint) {
+                if ($entryPoint && !isset($app['security.entry_point.' . $name . '.' . $entryPoint])) {
+                    $app['security.entry_point.' . $name . '.' . $entryPoint] = $app['security.entry_point.' . $entryPoint . '._proto']($name, $options);
                 }
 
-                if (!isset($app['security.authentication_listener.'.$name.'.'.$type])) {
-                    $app['security.authentication_listener.'.$name.'.'.$type] = $app['security.authentication_listener.'.$type.'._proto']($name, $options);
+                if (!isset($app['security.authentication_listener.' . $name . '.' . $type])) {
+                    $app['security.authentication_listener.' . $name . '.' . $type] = $app['security.authentication_listener.' . $type . '._proto']($name, $options);
                 }
 
                 $provider = 'dao';
@@ -205,14 +205,14 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                 } elseif ('guard' === $type) {
                     $provider = 'guard';
                 }
-                if (!isset($app['security.authentication_provider.'.$name.'.'.$provider])) {
-                    $app['security.authentication_provider.'.$name.'.'.$provider] = $app['security.authentication_provider.'.$provider.'._proto']($name, $options);
+                if (!isset($app['security.authentication_provider.' . $name . '.' . $provider])) {
+                    $app['security.authentication_provider.' . $name . '.' . $provider] = $app['security.authentication_provider.' . $provider . '._proto']($name, $options);
                 }
 
                 return [
-                    'security.authentication_provider.'.$name.'.'.$provider,
-                    'security.authentication_listener.'.$name.'.'.$type,
-                    $entryPoint ? 'security.entry_point.'.$name.'.'.$entryPoint : null,
+                    'security.authentication_provider.' . $name . '.' . $provider,
+                    'security.authentication_listener.' . $name . '.' . $type,
+                    $entryPoint ? 'security.entry_point.' . $name . '.' . $entryPoint : null,
                     $type,
                 ];
             });
@@ -242,15 +242,15 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                 }
 
                 if ($protected) {
-                    if (!isset($app['security.user_provider.'.$name])) {
-                        $app['security.user_provider.'.$name] = is_array($users) ? $app['security.user_provider.inmemory._proto']($users) : $users;
+                    if (!isset($app['security.user_provider.' . $name])) {
+                        $app['security.user_provider.' . $name] = is_array($users) ? $app['security.user_provider.inmemory._proto']($users) : $users;
                     }
-                    if (!isset($app['security.context_listener.'.$context])) {
-                        $app['security.context_listener.'.$context] = $app['security.context_listener._proto']($name, [$app['security.user_provider.'.$name]]);
+                    if (!isset($app['security.context_listener.' . $context])) {
+                        $app['security.context_listener.' . $context] = $app['security.context_listener._proto']($name, [$app['security.user_provider.' . $name]]);
                     }
 
                     if (false === $stateless) {
-                        $listeners[] = 'security.context_listener.'.$context;
+                        $listeners[] = 'security.context_listener.' . $context;
                     }
 
                     $factories = [];
@@ -272,13 +272,13 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                             $options = [];
                         }
 
-                        if (!isset($app['security.authentication_listener.factory.'.$type])) {
+                        if (!isset($app['security.authentication_listener.factory.' . $type])) {
                             throw new LogicException(sprintf('The "%s" authentication entry is not registered.', $type));
                         }
 
                         $options['stateless'] = $stateless;
 
-                        list($providerId, $listenerId, $entryPointId, $position) = $app['security.authentication_listener.factory.'.$type]($name, $options);
+                        list($providerId, $listenerId, $entryPointId, $position) = $app['security.authentication_listener.factory.' . $type]($name, $options);
 
                         if (null !== $entryPointId) {
                             $entryPoint = $entryPointId;
@@ -297,20 +297,20 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                     $listeners[] = 'security.access_listener';
 
                     if (isset($firewall['switch_user'])) {
-                        $app['security.switch_user.'.$name] = $app['security.authentication_listener.switch_user._proto']($name, $firewall['switch_user']);
+                        $app['security.switch_user.' . $name] = $app['security.authentication_listener.switch_user._proto']($name, $firewall['switch_user']);
 
-                        $listeners[] = 'security.switch_user.'.$name;
+                        $listeners[] = 'security.switch_user.' . $name;
                     }
 
-                    if (!isset($app['security.exception_listener.'.$name])) {
+                    if (!isset($app['security.exception_listener.' . $name])) {
                         if (null === $entryPoint) {
-                            $app[$entryPoint = 'security.entry_point.'.$name.'.form'] = $app['security.entry_point.form._proto']($name, []);
+                            $app[$entryPoint = 'security.entry_point.' . $name . '.form'] = $app['security.entry_point.form._proto']($name, []);
                         }
                         $accessDeniedHandler = null;
-                        if (isset($app['security.access_denied_handler.'.$name])) {
-                            $accessDeniedHandler = $app['security.access_denied_handler.'.$name];
+                        if (isset($app['security.access_denied_handler.' . $name])) {
+                            $accessDeniedHandler = $app['security.access_denied_handler.' . $name];
                         }
-                        $app['security.exception_listener.'.$name] = $app['security.exception_listener._proto']($entryPoint, $name, $accessDeniedHandler);
+                        $app['security.exception_listener.' . $name] = $app['security.exception_listener._proto']($entryPoint, $name, $accessDeniedHandler);
                     }
                 }
 
@@ -327,8 +327,6 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                 return $app[$provider];
             }, array_unique($providers));
 
-            /** @var EventDispatcherInterface $eventDispatcher */
-            $eventDispatcher = $app['dispatcher'];
             $map = new FirewallMap();
             foreach ($configs as $name => $config) {
                 if (is_string($config['pattern'])) {
@@ -339,20 +337,20 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
 
                 $map->add(
                     $requestMatcher,
-                    array_map(function ($listenerId) use ($app, $name, $eventDispatcher) {
+                    array_map(function ($listenerId) use ($app, $name) {
                         $listener = $app[$listenerId];
 
-                        if (isset($app['security.remember_me.service.'.$name])) {
+                        if (isset($app['security.remember_me.service.' . $name])) {
                             if ($listener instanceof AbstractAuthenticationListener || $listener instanceof GuardAuthenticationListener) {
-                                $listener->setRememberMeServices($app['security.remember_me.service.'.$name]);
+                                $listener->setRememberMeServices($app['security.remember_me.service.' . $name]);
                             }
                             if ($listener instanceof LogoutListener) {
-                                $handler = $app['security.remember_me.service.'.$name];
-
-                                $eventDispatcher->addListener(LogoutEvent::class, function (LogoutEvent $event) use ($handler, $app, $name) {
+                                $handler = $app['security.remember_me.service.' . $name];
+                                $app['dispatcher']->addListener(LogoutEvent::class, function (LogoutEvent $event) use ($handler) {
                                     if (null === $event->getResponse()) {
-                                        throw new SecurityLogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', __CLASS__));
+                                        throw new LogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', __CLASS__));
                                     }
+
                                     $handler->logout($event->getRequest(), $event->getResponse(), $event->getToken());
                                 });
                             }
@@ -360,7 +358,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
 
                         return $listener;
                     }, $config['listeners']),
-                    $config['protected'] ? $app['security.exception_listener.'.$name] : null
+                    $config['protected'] ? $app['security.exception_listener.' . $name] : null
                 );
             }
 
@@ -394,7 +392,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                     ];
                     $rule[0] = new RequestMatcher($rule[0]['path'], $rule[0]['host'], $rule[0]['methods'], $rule[0]['ips'], $rule[0]['attributes'], $rule[0]['schemes']);
                 }
-                $map->add($rule[0], (array) $rule[1], $rule[2] ?? null);
+                $map->add($rule[0], (array)$rule[1], $rule[2] ?? null);
             }
 
             return $map;
@@ -424,8 +422,6 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
 
                 return $message;
             }
-
-            return null;
         });
 
         // prototypes (used by the Firewall Map)
@@ -443,7 +439,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
         });
 
         $app['security.user_provider.inmemory._proto'] = $app->protect(function ($params) use ($app) {
-            return function () use ($params) {
+            return function () use ($app, $params) {
                 $users = array_map(function ($user) {
                     return ['roles' => (array)$user[0], 'password' => $user[1]];
                 }, $params);
@@ -521,22 +517,22 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
 
                 $class = $options['listener_class'] ?? 'Symfony\\Component\\Security\\Http\\Firewall\\UsernamePasswordFormAuthenticationListener';
 
-                if (!isset($app['security.authentication.success_handler.'.$name])) {
-                    $app['security.authentication.success_handler.'.$name] = $app['security.authentication.success_handler._proto']($name, $options);
+                if (!isset($app['security.authentication.success_handler.' . $name])) {
+                    $app['security.authentication.success_handler.' . $name] = $app['security.authentication.success_handler._proto']($name, $options);
                 }
 
-                if (!isset($app['security.authentication.failure_handler.'.$name])) {
-                    $app['security.authentication.failure_handler.'.$name] = $app['security.authentication.failure_handler._proto']($name, $options);
+                if (!isset($app['security.authentication.failure_handler.' . $name])) {
+                    $app['security.authentication.failure_handler.' . $name] = $app['security.authentication.failure_handler._proto']($name, $options);
                 }
 
                 return new $class(
                     $app['security.token_storage'],
                     $app['security.authentication_manager'],
-                    isset($app['security.session_strategy.'.$name]) ? $app['security.session_strategy.'.$name] : $app['security.session_strategy'],
+                    isset($app['security.session_strategy.' . $name]) ? $app['security.session_strategy.' . $name] : $app['security.session_strategy'],
                     $app['security.http_utils'],
                     $name,
-                    $app['security.authentication.success_handler.'.$name],
-                    $app['security.authentication.failure_handler.'.$name],
+                    $app['security.authentication.success_handler.' . $name],
+                    $app['security.authentication.failure_handler.' . $name],
                     $options,
                     $app['logger'],
                     $app['dispatcher'],
@@ -551,7 +547,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                     $app['security.token_storage'],
                     $app['security.authentication_manager'],
                     $providerKey,
-                    $app['security.entry_point.'.$providerKey.'.http'],
+                    $app['security.entry_point.' . $providerKey . '.http'],
                     $app['logger']
                 );
             };
@@ -584,8 +580,8 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                     str_replace('/', '_', ltrim($tmp, '/'))
                 );
 
-                if (!isset($app['security.authentication.logout_listener.'.$name])) {
-                    $app['security.authentication.logout_listener.'.$name] = $app['security.authentication.logout_listener._proto']($name, $options);
+                if (!isset($app['security.authentication.logout_listener.' . $name])) {
+                    $app['security.authentication.logout_listener.' . $name] = $app['security.authentication.logout_listener._proto']($name, $options);
                 }
 
                 /** @var EventDispatcher $eventDispatcher */
@@ -599,15 +595,15 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                     isset($options['with_csrf']) && $options['with_csrf'] && isset($app['csrf.token_manager']) ? $app['csrf.token_manager'] : null
                 );
 
-                $eventDispatcher->addSubscriber($app['security.authentication.logout_listener.'.$name]);
+                $eventDispatcher->addSubscriber($app['security.authentication.logout_listener.' . $name]);
 
                 $invalidateSession = $options['invalidate_session'] ?? true;
                 if (true === $invalidateSession && false === $options['stateless']) {
-                    $eventDispatcher->addListener(LogoutEvent::class, function (LogoutEvent $event) {
+                    $app['dispatcher']->addListener(LogoutEvent::class, function (LogoutEvent $event) {
                         $handler = new SessionLogoutHandler();
 
                         if (null === $event->getResponse()) {
-                            throw new SecurityLogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', __CLASS__));
+                            throw new LogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', __CLASS__));
                         }
 
                         $handler->logout($event->getRequest(), $event->getResponse(), $event->getToken());
@@ -622,7 +618,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
             return function () use ($app, $name, $options) {
                 return new SwitchUserListener(
                     $app['security.token_storage'],
-                    $app['security.user_provider.'.$name],
+                    $app['security.user_provider.' . $name],
                     $app['security.user_checker'],
                     $name,
                     $app['security.access_manager'],
@@ -669,7 +665,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
         $app['security.authentication_provider.dao._proto'] = $app->protect(function ($name, $options) use ($app) {
             return function () use ($app, $name) {
                 return new DaoAuthenticationProvider(
-                    $app['security.user_provider.'.$name],
+                    $app['security.user_provider.' . $name],
                     $app['security.user_checker'],
                     $name,
                     $app['security.encoder_factory'],
@@ -687,7 +683,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
 
                 return new GuardAuthenticationProvider(
                     $authenticators,
-                    $app['security.user_provider.'.$name],
+                    $app['security.user_provider.' . $name],
                     $name,
                     $app['security.user_checker'],
                     new UserPasswordEncoder($app['security.encoder_factory'])

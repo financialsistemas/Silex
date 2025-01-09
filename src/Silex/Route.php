@@ -35,7 +35,7 @@ class Route extends BaseRoute
      * @param string|array $schemes      A required URI scheme or an array of restricted schemes
      * @param string|array $methods      A required HTTP method or an array of restricted methods
      */
-    public function __construct(string $path = '/', array $defaults = [], array $requirements = [], array $options = [], $host = '', $schemes = [], $methods = [])
+    public function __construct($path = '/', array $defaults = [], array $requirements = [], array $options = [], $host = '', $schemes = [], $methods = [])
     {
         // overridden constructor to make $path optional
         parent::__construct($path, $defaults, $requirements, $options, $host, $schemes, $methods);
@@ -44,11 +44,11 @@ class Route extends BaseRoute
     /**
      * Sets the route code that should be executed when matched.
      *
-     * @param callable|null $to PHP callback that returns the response when matched
+     * @param callable $to PHP callback that returns the response when matched
      *
      * @return Route $this The current Route instance
      */
-    public function run(?callable $to): Route
+    public function run($to)
     {
         $this->setDefault('_controller', $to);
 
@@ -63,7 +63,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current route instance
      */
-    public function assert(string $variable, string $regexp): Route
+    public function assert($variable, $regexp)
     {
         $this->setRequirement($variable, $regexp);
 
@@ -78,7 +78,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function value(string $variable, $default): Route
+    public function value($variable, $default)
     {
         $this->setDefault($variable, $default);
 
@@ -93,7 +93,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function convert(string $variable, $callback): Route
+    public function convert($variable, $callback)
     {
         $converters = $this->getOption('_converters');
         $converters[$variable] = $callback;
@@ -109,7 +109,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function method(string $method): Route
+    public function method($method)
     {
         $this->setMethods(explode('|', $method));
 
@@ -123,7 +123,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function host(string $host): Route
+    public function host($host)
     {
         $this->setHost($host);
 
@@ -135,7 +135,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function requireHttp(): Route
+    public function requireHttp()
     {
         $this->setSchemes('http');
 
@@ -147,7 +147,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function requireHttps(): Route
+    public function requireHttps()
     {
         $this->setSchemes('https');
 
@@ -161,7 +161,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function before($callback): Route
+    public function before($callback)
     {
         $callbacks = $this->getOption('_before_middlewares');
         $callbacks[] = $callback;
@@ -177,7 +177,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function after($callback): Route
+    public function after($callback)
     {
         $callbacks = $this->getOption('_after_middlewares');
         $callbacks[] = $callback;
@@ -193,7 +193,7 @@ class Route extends BaseRoute
      *
      * @return Route $this The current Route instance
      */
-    public function when(string $condition): Route
+    public function when($condition)
     {
         $this->setCondition($condition);
 

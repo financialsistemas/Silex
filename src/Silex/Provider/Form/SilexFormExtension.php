@@ -45,7 +45,7 @@ class SilexFormExtension implements FormExtensionInterface
         return $this->types[$name];
     }
 
-    public function hasType($name): bool
+    public function hasType($name)
     {
         return isset($this->types[$name]);
     }
@@ -55,12 +55,12 @@ class SilexFormExtension implements FormExtensionInterface
         return $this->typeExtensions[$name] ?? [];
     }
 
-    public function hasTypeExtensions($name): bool
+    public function hasTypeExtensions($name)
     {
         return isset($this->typeExtensions[$name]);
     }
 
-    public function getTypeGuesser(): FormTypeGuesserChain
+    public function getTypeGuesser()
     {
         if (!$this->guesserLoaded) {
             $this->guesserLoaded = true;

@@ -92,7 +92,7 @@ class ControllerCollection
      *
      * @return Controller
      */
-    public function match(string $pattern, $to = null): Controller
+    public function match($pattern, $to = null)
     {
         $route = clone $this->defaultRoute;
         $route->setPath($pattern);
@@ -110,7 +110,7 @@ class ControllerCollection
      *
      * @return Controller
      */
-    public function get(string $pattern, $to = null): Controller
+    public function get($pattern, $to = null)
     {
         return $this->match($pattern, $to)->method('GET');
     }
@@ -123,7 +123,7 @@ class ControllerCollection
      *
      * @return Controller
      */
-    public function post(string $pattern, $to = null): Controller
+    public function post($pattern, $to = null)
     {
         return $this->match($pattern, $to)->method('POST');
     }
@@ -136,7 +136,7 @@ class ControllerCollection
      *
      * @return Controller
      */
-    public function put(string $pattern, $to = null): Controller
+    public function put($pattern, $to = null)
     {
         return $this->match($pattern, $to)->method('PUT');
     }
@@ -149,7 +149,7 @@ class ControllerCollection
      *
      * @return Controller
      */
-    public function delete(string $pattern, $to = null): Controller
+    public function delete($pattern, $to = null)
     {
         return $this->match($pattern, $to)->method('DELETE');
     }
@@ -162,7 +162,7 @@ class ControllerCollection
      *
      * @return Controller
      */
-    public function options(string $pattern, $to = null): Controller
+    public function options($pattern, $to = null)
     {
         return $this->match($pattern, $to)->method('OPTIONS');
     }
@@ -175,7 +175,7 @@ class ControllerCollection
      *
      * @return Controller
      */
-    public function patch(string $pattern, $to = null): Controller
+    public function patch($pattern, $to = null)
     {
         return $this->match($pattern, $to)->method('PATCH');
     }
@@ -200,7 +200,7 @@ class ControllerCollection
      *
      * @return RouteCollection A RouteCollection instance
      */
-    public function flush(): RouteCollection
+    public function flush()
     {
         if (null === $this->routesFactory) {
             $routes = new RouteCollection();
@@ -211,7 +211,7 @@ class ControllerCollection
         return $this->doFlush('', $routes);
     }
 
-    private function doFlush($prefix, RouteCollection $routes): RouteCollection
+    private function doFlush($prefix, RouteCollection $routes)
     {
         if ('' !== $prefix) {
             $prefix = '/'.trim(trim($prefix), '/');

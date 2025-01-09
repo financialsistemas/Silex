@@ -32,7 +32,7 @@ class CallbackResolver
      *
      * @return bool
      */
-    public function isValid($name): bool
+    public function isValid($name)
     {
         return is_string($name) && (preg_match(static::SERVICE_PATTERN, $name) || isset($this->app[$name]));
     }
@@ -46,7 +46,7 @@ class CallbackResolver
      *
      * @throws InvalidArgumentException in case the method does not exist
      */
-    public function convertCallback(string $name)
+    public function convertCallback($name)
     {
         if (preg_match(static::SERVICE_PATTERN, $name)) {
             $name = str_replace('::', ':', $name);
@@ -67,7 +67,7 @@ class CallbackResolver
     /**
      * Returns a callable given its string representation if it is a valid service method.
      *
-     * @param string|object $name
+     * @param string $name
      *
      * @return string|callable A callable value or the string passed in
      *
