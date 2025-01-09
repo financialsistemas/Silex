@@ -38,7 +38,7 @@ class ServiceControllerResolverRouterTest extends RouterTest
         $this->checkRouteResponse($app, '/bar', 'bar');
     }
 
-    protected function checkRouteResponse(Application $app, $path, $expectedContent, $method = 'get', $message = '')
+    protected function checkRouteResponse(Application $app, $path, $expectedContent, $method = 'get', $message = ''): void
     {
         $request = Request::create($path, $method);
         $response = $app->handle($request);

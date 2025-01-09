@@ -14,7 +14,7 @@ namespace Silex\Provider\Session;
 use Pimple\Container;
 use Pimple\Psr11\Container as Psr11Container;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
-use Symfony\Component\HttpKernel\EventListener\TestSessionListener as BaseTestSessionListener;
+use Symfony\Component\HttpKernel\EventListener\SessionListener as BaseTestSessionListener;
 
 /**
  * Simulates sessions for testing purpose.

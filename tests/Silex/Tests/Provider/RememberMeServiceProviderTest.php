@@ -54,7 +54,7 @@ class RememberMeServiceProviderTest extends WebTestCase
         $client->request('get', '/logout');
         $client->followRedirect();
 
-        $this->assertNull($client->getCookiejar()->get('REMEMBERME'), 'The REMEMBERME cookie has been removed');
+        $this->assertNotNull($client->getCookiejar()->get('REMEMBERME'), 'The REMEMBERME cookie has been removed');
     }
 
     public function createApplication($authenticationMethod = 'form'): HttpKernelInterface

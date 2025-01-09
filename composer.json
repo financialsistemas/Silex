@@ -23,6 +23,7 @@
         "symfony/routing": "^5.0"
     },
     "require-dev": {
+        "ext-pdo": "*",
         "doctrine/dbal": "^2.2",
         "monolog/monolog": "^1.4.1",
         "phpunit/phpunit": "^9.6",

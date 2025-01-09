@@ -219,6 +219,8 @@ class FormServiceProviderTest extends TestCase
 
             return $extensions;
         });
+
+        $this->assertInstanceOf('Symfony\Component\Form\FormFactory', $app['form.factory']);
     }
 
     /**

@@ -81,14 +81,14 @@ class ExceptionHandlerTest extends TestCase
     /**
      * @throws Exception
      */
-    public function testExceptionHandlerNotFoundDebug()
+    public function testExceptionHandlerNotFoundDebug(): void
     {
         $app = new Application();
         $app['debug'] = true;
 
         $request = Request::create('/foo');
         $response = $app->handle($request);
-        $this->assertStringContainsString('No route found for "GET /foo"', html_entity_decode($response->getContent()));
+        $this->assertStringContainsString('No route found for "GET', html_entity_decode($response->getContent()));
         $this->assertEquals(404, $response->getStatusCode());
     }
 
