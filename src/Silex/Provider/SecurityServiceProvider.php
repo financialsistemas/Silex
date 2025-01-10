@@ -18,7 +18,6 @@ use Silex\Api\BootableProviderInterface;
 use Silex\Api\ControllerProviderInterface;
 use Silex\Api\EventListenerProviderInterface;
 use Silex\Application;
-use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestMatcher;
@@ -51,6 +50,7 @@ use Symfony\Component\Security\Http\Authentication\DefaultAuthenticationSuccessH
 use Symfony\Component\Security\Http\EntryPoint\BasicAuthenticationEntryPoint;
 use Symfony\Component\Security\Http\EntryPoint\FormAuthenticationEntryPoint;
 use Symfony\Component\Security\Http\EntryPoint\RetryAuthenticationEntryPoint;
+use Symfony\Component\Security\Http\Event\LogoutEvent;
 use Symfony\Component\Security\Http\EventListener\DefaultLogoutListener;
 use Symfony\Component\Security\Http\Firewall;
 use Symfony\Component\Security\Http\Firewall\AbstractAuthenticationListener;
@@ -76,9 +76,6 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
 {
     protected $fakeRoutes;
 
-    /**
-     * @param Application $app
-     */
     public function register(Container $app)
     {
         // used to register routes for login_check and logout
@@ -340,12 +337,12 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                     array_map(function ($listenerId) use ($app, $name) {
                         $listener = $app[$listenerId];
 
-                        if (isset($app['security.remember_me.service.' . $name])) {
+                        if (isset($app['security.remember_me.service . ' . $name])) {
                             if ($listener instanceof AbstractAuthenticationListener || $listener instanceof GuardAuthenticationListener) {
-                                $listener->setRememberMeServices($app['security.remember_me.service.' . $name]);
+                                $listener->setRememberMeServices($app['security.remember_me.service . ' . $name]);
                             }
                             if ($listener instanceof LogoutListener) {
-                                $handler = $app['security.remember_me.service.' . $name];
+                                $handler = $app['security.remember_me.service . ' . $name];
                                 $app['dispatcher']->addListener(LogoutEvent::class, function (LogoutEvent $event) use ($handler) {
                                     if (null === $event->getResponse()) {
                                         throw new LogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', __CLASS__));
@@ -392,13 +389,13 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                     ];
                     $rule[0] = new RequestMatcher($rule[0]['path'], $rule[0]['host'], $rule[0]['methods'], $rule[0]['ips'], $rule[0]['attributes'], $rule[0]['schemes']);
                 }
-                $map->add($rule[0], (array)$rule[1], $rule[2] ?? null);
+                $map->add($rule[0], (array) $rule[1], $rule[2] ?? null);
             }
 
             return $map;
         };
 
-        $app['security.trust_resolver'] = function ($app) {
+        $app['security.trust_resolver'] = function () {
             return new AuthenticationTrustResolver();
         };
 
@@ -422,6 +419,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
 
                 return $message;
             }
+            return null;
         });
 
         // prototypes (used by the Firewall Map)
@@ -440,9 +438,10 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
 
         $app['security.user_provider.inmemory._proto'] = $app->protect(function ($params) use ($app) {
             return function () use ($app, $params) {
-                $users = array_map(function ($user) {
-                    return ['roles' => (array)$user[0], 'password' => $user[1]];
-                }, $params);
+                $users = [];
+                foreach ($params as $name => $user) {
+                    $users[$name] = ['roles' => (array) $user[0], 'password' => $user[1]];
+                }
 
                 return new InMemoryUserProvider($users);
             };
@@ -547,7 +546,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                     $app['security.token_storage'],
                     $app['security.authentication_manager'],
                     $providerKey,
-                    $app['security.entry_point.' . $providerKey . '.http'],
+                    $app['security.entry_point.' . $providerKey.'.http'],
                     $app['logger']
                 );
             };
@@ -584,24 +583,20 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                     $app['security.authentication.logout_listener.' . $name] = $app['security.authentication.logout_listener._proto']($name, $options);
                 }
 
-                /** @var EventDispatcher $eventDispatcher */
-                $eventDispatcher = $app['dispatcher'];
+                $app['dispatcher']->addSubscriber($app['security.authentication.logout_listener.' . $name]);
 
                 $listener = new LogoutListener(
                     $app['security.token_storage'],
                     $app['security.http_utils'],
-                    $eventDispatcher,
+                    $app['dispatcher'],
                     $options,
                     isset($options['with_csrf']) && $options['with_csrf'] && isset($app['csrf.token_manager']) ? $app['csrf.token_manager'] : null
                 );
 
-                $eventDispatcher->addSubscriber($app['security.authentication.logout_listener.' . $name]);
-
                 $invalidateSession = $options['invalidate_session'] ?? true;
                 if (true === $invalidateSession && false === $options['stateless']) {
-                    $app['dispatcher']->addListener(LogoutEvent::class, function (LogoutEvent $event) {
-                        $handler = new SessionLogoutHandler();
-
+                    $handler = new SessionLogoutHandler();
+                    $app['dispatcher']->addListener(LogoutEvent::class, function (LogoutEvent $event) use ($handler) {
                         if (null === $event->getResponse()) {
                             throw new LogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', __CLASS__));
                         }
