@@ -34,6 +34,7 @@ use Symfony\Component\Security\Core\Encoder\EncoderFactory;
 use Symfony\Component\Security\Core\Encoder\MessageDigestPasswordEncoder;
 use Symfony\Component\Security\Core\Encoder\NativePasswordEncoder;
 use Symfony\Component\Security\Core\Encoder\Pbkdf2PasswordEncoder;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoder;
 use Symfony\Component\Security\Core\Role\RoleHierarchy;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Security\Core\User\InMemoryUserProvider;
@@ -49,6 +50,7 @@ use Symfony\Component\Security\Http\Authentication\DefaultAuthenticationSuccessH
 use Symfony\Component\Security\Http\EntryPoint\BasicAuthenticationEntryPoint;
 use Symfony\Component\Security\Http\EntryPoint\FormAuthenticationEntryPoint;
 use Symfony\Component\Security\Http\EntryPoint\RetryAuthenticationEntryPoint;
+use Symfony\Component\Security\Http\Event\LogoutEvent;
 use Symfony\Component\Security\Http\Firewall;
 use Symfony\Component\Security\Http\Firewall\AbstractAuthenticationListener;
 use Symfony\Component\Security\Http\Firewall\AccessListener;
@@ -64,7 +66,6 @@ use Symfony\Component\Security\Http\HttpUtils;
 use Symfony\Component\Security\Http\Logout\DefaultLogoutSuccessHandler;
 use Symfony\Component\Security\Http\Logout\SessionLogoutHandler;
 use Symfony\Component\Security\Http\Session\SessionAuthenticationStrategy;
-use const PASSWORD_BCRYPT;
 
 /**
  * Symfony Security component Provider.
@@ -85,7 +86,6 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
         $app['security.role_hierarchy'] = [];
         $app['security.access_rules'] = [];
         $app['security.hide_user_not_found'] = true;
-        $app['security.encoder.bcrypt.cost'] = 13;
 
         $app['security.authorization_checker'] = function ($app) {
             return new AuthorizationChecker($app['security.token_storage'], $app['security.authentication_manager'], $app['security.access_manager']);
@@ -121,24 +121,24 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
             ]);
         };
 
-        // by default, all users use the BCrypt encoder
+        // by default, all users use the native encoder
         $app['security.default_encoder'] = function ($app) {
-            return $app['security.encoder.bcrypt'];
+            return $app['security.encoder.native'];
         };
 
         $app['security.encoder.digest'] = function ($app) {
             return new MessageDigestPasswordEncoder();
         };
 
-        $app['security.encoder.bcrypt'] = function ($app) {
-            return new NativePasswordEncoder(null, null, $app['security.encoder.bcrypt.cost'], PASSWORD_BCRYPT);
-        };
-
         $app['security.encoder.pbkdf2'] = function ($app) {
             return new Pbkdf2PasswordEncoder();
         };
 
-        $app['security.user_checker'] = function () {
+        $app['security.encoder.native'] = function ($app) {
+            return new NativePasswordEncoder();
+        };
+
+        $app['security.user_checker'] = function ($app) {
             return new UserChecker();
         };
 
@@ -342,7 +342,14 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                                 $listener->setRememberMeServices($app['security.remember_me.service.' . $name]);
                             }
                             if ($listener instanceof LogoutListener) {
-                                $listener->addHandler($app['security.remember_me.service.' . $name]);
+                                $handler = $app['security.remember_me.service.' . $name];
+                                $app['dispatcher']->addListener(LogoutEvent::class, function (LogoutEvent $event) use ($handler) {
+                                    if (null === $event->getResponse()) {
+                                        throw new LogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', __CLASS__));
+                                    }
+
+                                    $handler->logout($event->getRequest(), $event->getResponse(), $event->getToken());
+                                });
                             }
                         }
 
@@ -361,7 +368,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                 $app['security.access_manager'],
                 $app['security.access_map'],
                 $app['security.authentication_manager'],
-                $app['logger']
+                $app['security.exception_on_no_token']
             );
         };
 
@@ -461,7 +468,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                     $app['security.http_utils'],
                     $options
                 );
-                $handler->setProviderKey($name);
+                $handler->setFirewallName($name);
 
                 return $handler;
             };
@@ -587,7 +594,14 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
 
                 $invalidateSession = $options['invalidate_session'] ?? true;
                 if (true === $invalidateSession && false === $options['stateless']) {
-                    $listener->addHandler(new SessionLogoutHandler());
+                    $app['dispatcher']->addListener(LogoutEvent::class, function (LogoutEvent $event) {
+                        $handler = new SessionLogoutHandler();
+                        if (null === $event->getResponse()) {
+                            throw new LogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', __CLASS__));
+                        }
+
+                        $handler->logout($event->getRequest(), $event->getResponse(), $event->getToken());
+                    });
                 }
 
                 return $listener;
@@ -665,7 +679,8 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                     $authenticators,
                     $app['security.user_provider.' . $name],
                     $name,
-                    $app['security.user_checker']
+                    $app['security.user_checker'],
+                    new UserPasswordEncoder($app['security.encoder_factory'])
                 );
             };
         });
@@ -678,6 +693,10 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
 
         $app['security.authentication_utils'] = function ($app) {
             return new AuthenticationUtils($app['request_stack']);
+        };
+
+        $app['security.exception_on_no_token'] = function ($app) {
+            return true;
         };
     }
 
