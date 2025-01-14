@@ -25,6 +25,7 @@ use Symfony\Component\Security\Core\Authentication\AuthenticationProviderManager
 use Symfony\Component\Security\Core\Authentication\AuthenticationTrustResolver;
 use Symfony\Component\Security\Core\Authentication\Provider\AnonymousAuthenticationProvider;
 use Symfony\Component\Security\Core\Authentication\Provider\DaoAuthenticationProvider;
+use Symfony\Component\Security\Core\Authentication\Token\NullToken;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 use Symfony\Component\Security\Core\Authorization\AccessDecisionManager;
 use Symfony\Component\Security\Core\Authorization\AuthorizationChecker;
@@ -348,7 +349,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                                         throw new LogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', __CLASS__));
                                     }
 
-                                    $handler->logout($event->getRequest(), $event->getResponse(), $event->getToken());
+                                    $handler->logout($event->getRequest(), $event->getResponse(), $event->getToken() ?? new NullToken());
                                 });
                             }
                         }
@@ -600,7 +601,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                             throw new LogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', __CLASS__));
                         }
 
-                        $handler->logout($event->getRequest(), $event->getResponse(), $event->getToken());
+                        $handler->logout($event->getRequest(), $event->getResponse(), $event->getToken() ?? new NullToken());
                     });
                 }
 
