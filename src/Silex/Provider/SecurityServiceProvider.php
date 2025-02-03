@@ -40,6 +40,7 @@ use Symfony\Component\Security\Core\Role\RoleHierarchy;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Security\Core\User\InMemoryUserProvider;
 use Symfony\Component\Security\Core\User\UserChecker;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\Validator\Constraints\UserPasswordValidator;
 use Symfony\Component\Security\Guard\Firewall\GuardAuthenticationListener;
 use Symfony\Component\Security\Guard\GuardAuthenticatorHandler;
@@ -62,6 +63,7 @@ use Symfony\Component\Security\Http\Firewall\ContextListener;
 use Symfony\Component\Security\Http\Firewall\ExceptionListener;
 use Symfony\Component\Security\Http\Firewall\LogoutListener;
 use Symfony\Component\Security\Http\Firewall\SwitchUserListener;
+use Symfony\Component\Security\Http\Firewall\UsernamePasswordFormAuthenticationListener;
 use Symfony\Component\Security\Http\FirewallMap;
 use Symfony\Component\Security\Http\HttpUtils;
 use Symfony\Component\Security\Http\Logout\DefaultLogoutSuccessHandler;
@@ -118,7 +120,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
         // by default, all users use the digest encoder
         $app['security.encoder_factory'] = function ($app) {
             return new EncoderFactory([
-                'Symfony\Component\Security\Core\User\UserInterface' => $app['security.default_encoder'],
+                UserInterface::class => $app['security.default_encoder'],
             ]);
         };
 
@@ -276,7 +278,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
 
                         $options['stateless'] = $stateless;
 
-                        list($providerId, $listenerId, $entryPointId, $position) = $app['security.authentication_listener.factory.' . $type]($name, $options);
+                        [$providerId, $listenerId, $entryPointId, $position] = $app['security.authentication_listener.factory.' . $type]($name, $options);
 
                         if (null !== $entryPointId) {
                             $entryPoint = $entryPointId;
@@ -344,9 +346,9 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                             }
                             if ($listener instanceof LogoutListener) {
                                 $handler = $app['security.remember_me.service.' . $name];
-                                $app['dispatcher']->addListener(LogoutEvent::class, function (LogoutEvent $event) use ($handler) {
+                                $app['dispatcher']->addListener(LogoutEvent::class, function (LogoutEvent $event) use ($handler): void {
                                     if (null === $event->getResponse()) {
-                                        throw new LogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', __CLASS__));
+                                        throw new LogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', self::class));
                                     }
 
                                     $handler->logout($event->getRequest(), $event->getResponse(), $event->getToken() ?? new NullToken());
@@ -516,7 +518,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                     str_replace('/', '_', ltrim($tmp, '/'))
                 );
 
-                $class = $options['listener_class'] ?? 'Symfony\\Component\\Security\\Http\\Firewall\\UsernamePasswordFormAuthenticationListener';
+                $class = $options['listener_class'] ?? UsernamePasswordFormAuthenticationListener::class;
 
                 if (!isset($app['security.authentication.success_handler.' . $name])) {
                     $app['security.authentication.success_handler.' . $name] = $app['security.authentication.success_handler._proto']($name, $options);
@@ -529,7 +531,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                 return new $class(
                     $app['security.token_storage'],
                     $app['security.authentication_manager'],
-                    isset($app['security.session_strategy.' . $name]) ? $app['security.session_strategy.' . $name] : $app['security.session_strategy'],
+                    $app['security.session_strategy.' . $name] ?? $app['security.session_strategy'],
                     $app['security.http_utils'],
                     $name,
                     $app['security.authentication.success_handler.' . $name],
@@ -595,10 +597,10 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
 
                 $invalidateSession = $options['invalidate_session'] ?? true;
                 if (true === $invalidateSession && false === $options['stateless']) {
-                    $app['dispatcher']->addListener(LogoutEvent::class, function (LogoutEvent $event) {
+                    $app['dispatcher']->addListener(LogoutEvent::class, function (LogoutEvent $event): void {
                         $handler = new SessionLogoutHandler();
                         if (null === $event->getResponse()) {
-                            throw new LogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', __CLASS__));
+                            throw new LogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', self::class));
                         }
 
                         $handler->logout($event->getRequest(), $event->getResponse(), $event->getToken() ?? new NullToken());
@@ -710,7 +712,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
     {
         $controllers = $app['controllers_factory'];
         foreach ($this->fakeRoutes as $route) {
-            list($method, $pattern, $name) = $route;
+            [$method, $pattern, $name] = $route;
 
             $controllers->$method($pattern)->run(null)->bind($name);
         }

@@ -53,7 +53,7 @@ class ControllerCollection
         $this->defaultRoute = $defaultRoute;
         $this->routesFactory = $routesFactory;
         $this->controllersFactory = $controllersFactory;
-        $this->defaultController = function (Request $request) {
+        $this->defaultController = function (Request $request): void {
             throw new LogicException(sprintf('The "%s" route must have code to run when it matches.', $request->attributes->get('_route')));
         };
     }
@@ -97,7 +97,7 @@ class ControllerCollection
         $route = clone $this->defaultRoute;
         $route->setPath($pattern);
         $this->controllers[] = $controller = new Controller($route);
-        $route->setDefault('_controller', null === $to ? $this->defaultController : $to);
+        $route->setDefault('_controller', $to ?? $this->defaultController);
 
         return $controller;
     }

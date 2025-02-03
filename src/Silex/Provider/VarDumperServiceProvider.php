@@ -48,8 +48,8 @@ class VarDumperServiceProvider implements ServiceProviderInterface, BootableProv
         // This code is here to lazy load the dump stack. This default
         // configuration for CLI mode is overridden in HTTP mode on
         // 'kernel.request' event
-        VarDumper::setHandler(function ($var) use ($app) {
-            VarDumper::setHandler($handler = function ($var) use ($app) {
+        VarDumper::setHandler(function ($var) use ($app): void {
+            VarDumper::setHandler($handler = function ($var) use ($app): void {
                 $app['var_dumper.cli_dumper']->dump($app['var_dumper.cloner']->cloneVar($var));
             });
             $handler($var);

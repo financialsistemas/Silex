@@ -35,7 +35,7 @@ class DoctrineServiceProvider implements ServiceProviderInterface
             'password' => null,
         ];
 
-        $app['dbs.options.initializer'] = $app->protect(function () use ($app) {
+        $app['dbs.options.initializer'] = $app->protect(function () use ($app): void {
             static $initialized = false;
 
             if ($initialized) {
@@ -45,7 +45,7 @@ class DoctrineServiceProvider implements ServiceProviderInterface
             $initialized = true;
 
             if (!isset($app['dbs.options'])) {
-                $app['dbs.options'] = ['default' => isset($app['db.options']) ? $app['db.options'] : []];
+                $app['dbs.options'] = ['default' => $app['db.options'] ?? []];
             }
 
             $tmp = $app['dbs.options'];
@@ -85,7 +85,7 @@ class DoctrineServiceProvider implements ServiceProviderInterface
             $app['dbs.options.initializer']();
 
             $configs = new Container();
-            $addLogger = isset($app['logger']) && $app['logger'] !== null && class_exists('Symfony\Bridge\Doctrine\Logger\DbalLogger');
+            $addLogger = isset($app['logger']) && $app['logger'] !== null && class_exists(\Symfony\Bridge\Doctrine\Logger\DbalLogger::class);
             foreach ($app['dbs.options'] as $name => $options) {
                 $configs[$name] = new Configuration();
                 if ($addLogger) {

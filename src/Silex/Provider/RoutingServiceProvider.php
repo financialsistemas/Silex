@@ -17,6 +17,7 @@ use Silex\Api\EventListenerProviderInterface;
 use Silex\ControllerCollection;
 use Silex\Provider\Routing\LazyRequestMatcher;
 use Silex\Provider\Routing\RedirectableUrlMatcher;
+use Silex\Route;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpKernel\EventListener\RouterListener;
 use Symfony\Component\Routing\Generator\UrlGenerator;
@@ -32,7 +33,7 @@ class RoutingServiceProvider implements ServiceProviderInterface, EventListenerP
 {
     public function register(Container $app)
     {
-        $app['route_class'] = 'Silex\\Route';
+        $app['route_class'] = Route::class;
 
         $app['route_factory'] = $app->factory(function ($app) {
             return new $app['route_class']();

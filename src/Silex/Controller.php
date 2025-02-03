@@ -78,7 +78,7 @@ class Controller
     public function bind($routeName)
     {
         if ($this->isFrozen) {
-            throw new ControllerFrozenException(sprintf('Calling %s on frozen %s instance.', __METHOD__, __CLASS__));
+            throw new ControllerFrozenException(sprintf('Calling %s on frozen %s instance.', __METHOD__, self::class));
         }
 
         $this->routeName = $routeName;

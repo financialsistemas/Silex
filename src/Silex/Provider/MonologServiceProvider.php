@@ -39,7 +39,7 @@ class MonologServiceProvider implements ServiceProviderInterface, BootableProvid
             return $app['monolog'];
         };
 
-        if ($bridge = class_exists('Symfony\Bridge\Monolog\Logger')) {
+        if ($bridge = class_exists(\Symfony\Bridge\Monolog\Logger::class)) {
             if (isset($app['request_stack'])) {
                 $app['monolog.not_found_activation_strategy'] = function () use ($app) {
                     $level = self::translateLevel($app['monolog.level']);
@@ -49,7 +49,7 @@ class MonologServiceProvider implements ServiceProviderInterface, BootableProvid
             }
         }
 
-        $app['monolog.logger.class'] = $bridge ? 'Symfony\Bridge\Monolog\Logger' : 'Monolog\Logger';
+        $app['monolog.logger.class'] = $bridge ? \Symfony\Bridge\Monolog\Logger::class : Logger::class;
 
         $app['monolog'] = function ($app) use ($bridge) {
             $log = new $app['monolog.logger.class']($app['monolog.name']);

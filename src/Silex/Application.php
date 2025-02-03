@@ -249,7 +249,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      */
     public function before($callback, $priority = 0)
     {
-        $this->on(KernelEvents::REQUEST, function (RequestEvent $event) use ($callback) {
+        $this->on(KernelEvents::REQUEST, function (RequestEvent $event) use ($callback): void {
             $app = $this;
 
             if (!$event->isMainRequest()) {
@@ -275,7 +275,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
      */
     public function after($callback, $priority = 0)
     {
-        $this->on(KernelEvents::RESPONSE, function (ResponseEvent $event) use ($callback) {
+        $this->on(KernelEvents::RESPONSE, function (ResponseEvent $event) use ($callback): void {
             $app = $this;
 
             if (!$event->isMainRequest()) {
@@ -304,7 +304,7 @@ class Application extends Container implements HttpKernelInterface, TerminableIn
     {
         $app = $this;
 
-        $this->on(KernelEvents::TERMINATE, function (TerminateEvent $event) use ($callback, $app) {
+        $this->on(KernelEvents::TERMINATE, function (TerminateEvent $event) use ($callback, $app): void {
             call_user_func($app['callback_resolver']->resolveCallback($callback), $event->getRequest(), $event->getResponse(), $app);
         }, $priority);
     }

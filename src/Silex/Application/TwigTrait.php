@@ -37,7 +37,7 @@ trait TwigTrait
         $twig = $this['twig'];
 
         if ($response instanceof StreamedResponse) {
-            $response->setCallback(function () use ($twig, $view, $parameters) {
+            $response->setCallback(function () use ($twig, $view, $parameters): void {
                 $twig->display($view, $parameters);
             });
         } else {

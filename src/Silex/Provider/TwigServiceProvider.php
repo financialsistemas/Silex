@@ -81,7 +81,7 @@ class TwigServiceProvider implements ServiceProviderInterface
                 $twig->addExtension(new DebugExtension());
             }
 
-            if (class_exists('Symfony\Bridge\Twig\Extension\RoutingExtension')) {
+            if (class_exists(RoutingExtension::class)) {
                 if (!isset($app['twig.app_variable'])) {
                     $app['twig.app_variable'] = function ($app) {
                         $var = new AppVariable();
@@ -140,7 +140,7 @@ class TwigServiceProvider implements ServiceProviderInterface
                     $twig->addExtension(new FormExtension());
 
                     // add loader for Symfony built-in form templates
-                    $reflected = new ReflectionClass('Symfony\Bridge\Twig\Extension\FormExtension');
+                    $reflected = new ReflectionClass(FormExtension::class);
                     $path = dirname($reflected->getFileName()).'/../Resources/views/Form';
                     $app['twig.loader']->addLoader(new FilesystemLoader($path));
                 }
