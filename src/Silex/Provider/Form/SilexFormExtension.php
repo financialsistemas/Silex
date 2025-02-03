@@ -50,12 +50,12 @@ class SilexFormExtension implements FormExtensionInterface
         return isset($this->types[$name]);
     }
 
-    public function getTypeExtensions($name)
+    public function getTypeExtensions(string $name)
     {
         return $this->typeExtensions[$name] ?? [];
     }
 
-    public function hasTypeExtensions($name)
+    public function hasTypeExtensions(string $name)
     {
         return isset($this->typeExtensions[$name]);
     }
