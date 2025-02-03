@@ -18,9 +18,16 @@ use Silex\Api\BootableProviderInterface;
 use Silex\Api\ControllerProviderInterface;
 use Silex\Api\EventListenerProviderInterface;
 use Silex\Application;
+use Silex\Authentication\LoginFormAuthenticator;
+use Silex\Authentication\UsernamePassawordFormAuthenticator;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestMatcher;
+use Symfony\Component\PasswordHasher\Hasher\MessageDigestPasswordHasher;
+use Symfony\Component\PasswordHasher\Hasher\NativePasswordHasher;
+use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactory;
+use Symfony\Component\PasswordHasher\Hasher\Pbkdf2PasswordHasher;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasher;
 use Symfony\Component\Security\Core\Authentication\AuthenticationProviderManager;
 use Symfony\Component\Security\Core\Authentication\AuthenticationTrustResolver;
 use Symfony\Component\Security\Core\Authentication\Provider\AnonymousAuthenticationProvider;
@@ -31,15 +38,10 @@ use Symfony\Component\Security\Core\Authorization\AccessDecisionManager;
 use Symfony\Component\Security\Core\Authorization\AuthorizationChecker;
 use Symfony\Component\Security\Core\Authorization\Voter\AuthenticatedVoter;
 use Symfony\Component\Security\Core\Authorization\Voter\RoleHierarchyVoter;
-use Symfony\Component\Security\Core\Encoder\EncoderFactory;
-use Symfony\Component\Security\Core\Encoder\MessageDigestPasswordEncoder;
-use Symfony\Component\Security\Core\Encoder\NativePasswordEncoder;
-use Symfony\Component\Security\Core\Encoder\Pbkdf2PasswordEncoder;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoder;
 use Symfony\Component\Security\Core\Role\RoleHierarchy;
 use Symfony\Component\Security\Core\Security;
+use Symfony\Component\Security\Core\User\InMemoryUserChecker;
 use Symfony\Component\Security\Core\User\InMemoryUserProvider;
-use Symfony\Component\Security\Core\User\UserChecker;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\Validator\Constraints\UserPasswordValidator;
 use Symfony\Component\Security\Guard\Firewall\GuardAuthenticationListener;
@@ -53,6 +55,7 @@ use Symfony\Component\Security\Http\EntryPoint\BasicAuthenticationEntryPoint;
 use Symfony\Component\Security\Http\EntryPoint\FormAuthenticationEntryPoint;
 use Symfony\Component\Security\Http\EntryPoint\RetryAuthenticationEntryPoint;
 use Symfony\Component\Security\Http\Event\LogoutEvent;
+use Symfony\Component\Security\Http\EventListener\SessionLogoutListener;
 use Symfony\Component\Security\Http\Firewall;
 use Symfony\Component\Security\Http\Firewall\AbstractAuthenticationListener;
 use Symfony\Component\Security\Http\Firewall\AccessListener;
@@ -67,7 +70,6 @@ use Symfony\Component\Security\Http\Firewall\UsernamePasswordFormAuthenticationL
 use Symfony\Component\Security\Http\FirewallMap;
 use Symfony\Component\Security\Http\HttpUtils;
 use Symfony\Component\Security\Http\Logout\DefaultLogoutSuccessHandler;
-use Symfony\Component\Security\Http\Logout\SessionLogoutHandler;
 use Symfony\Component\Security\Http\Session\SessionAuthenticationStrategy;
 
 /**
@@ -119,7 +121,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
 
         // by default, all users use the digest encoder
         $app['security.encoder_factory'] = function ($app) {
-            return new EncoderFactory([
+            return new PasswordHasherFactory([
                 UserInterface::class => $app['security.default_encoder'],
             ]);
         };
@@ -130,19 +132,19 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
         };
 
         $app['security.encoder.digest'] = function ($app) {
-            return new MessageDigestPasswordEncoder();
+            return new MessageDigestPasswordHasher();
         };
 
         $app['security.encoder.pbkdf2'] = function ($app) {
-            return new Pbkdf2PasswordEncoder();
+            return new Pbkdf2PasswordHasher();
         };
 
         $app['security.encoder.native'] = function ($app) {
-            return new NativePasswordEncoder();
+            return new NativePasswordHasher();
         };
 
         $app['security.user_checker'] = function ($app) {
-            return new UserChecker();
+            return new InMemoryUserChecker();
         };
 
         $app['security.access_manager'] = function ($app) {
@@ -598,12 +600,12 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                 $invalidateSession = $options['invalidate_session'] ?? true;
                 if (true === $invalidateSession && false === $options['stateless']) {
                     $app['dispatcher']->addListener(LogoutEvent::class, function (LogoutEvent $event): void {
-                        $handler = new SessionLogoutHandler();
+                        $handler = new SessionLogoutListener();
                         if (null === $event->getResponse()) {
                             throw new LogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', self::class));
                         }
 
-                        $handler->logout($event->getRequest(), $event->getResponse(), $event->getToken() ?? new NullToken());
+                        $handler->onLogout($event);
                     });
                 }
 
@@ -683,7 +685,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                     $app['security.user_provider.' . $name],
                     $name,
                     $app['security.user_checker'],
-                    new UserPasswordEncoder($app['security.encoder_factory'])
+                    new UserPasswordHasher($app['security.encoder_factory'])
                 );
             };
         });

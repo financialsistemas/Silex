@@ -297,7 +297,7 @@ class SecurityServiceProviderTest extends WebTestCase
         $request->headers->set('PHP_AUTH_PW', 'foo');
         $app->handle($request);
         $this->assertInstanceOf('Symfony\Component\Security\Core\User\UserInterface', $app['user']);
-        $this->assertEquals('fabien', $app['user']->getUsername());
+        $this->assertEquals('fabien', $app['user']->getUserIdentifier());
     }
 
     /**
@@ -330,7 +330,7 @@ class SecurityServiceProviderTest extends WebTestCase
         $request->headers->set('PHP_AUTH_PW', 'foo');
         $app->handle($request);
         $this->assertInstanceOf('Symfony\Component\Security\Core\User\UserInterface', $app['user']);
-        $this->assertEquals('fabien', $app['user']->getUsername());
+        $this->assertEquals('fabien', $app['user']->getUserIdentifier());
     }
 
     /**
@@ -452,7 +452,7 @@ class SecurityServiceProviderTest extends WebTestCase
         $app->get('/', function () use ($app) {
             $user = $app['security.token_storage']->getToken()->getUser();
 
-            $content = is_object($user) ? $user->getUsername() : 'ANONYMOUS';
+            $content = is_object($user) ? $user->getUserIdentifier() : 'ANONYMOUS';
 
             if ($app['security.authorization_checker']->isGranted('IS_AUTHENTICATED_FULLY')) {
                 $content .= 'AUTHENTICATED';
@@ -496,7 +496,7 @@ class SecurityServiceProviderTest extends WebTestCase
 
         $app->get('/', function () use ($app) {
             $user = $app['security.token_storage']->getToken()->getUser();
-            $content = is_object($user) ? $user->getUsername() : 'ANONYMOUS';
+            $content = is_object($user) ? $user->getUserIdentifier() : 'ANONYMOUS';
 
             if ($app['security.authorization_checker']->isGranted('IS_AUTHENTICATED_FULLY')) {
                 $content .= 'AUTHENTICATED';
@@ -542,7 +542,7 @@ class SecurityServiceProviderTest extends WebTestCase
         $app->get('/', function () use ($app) {
             $user = $app['security.token_storage']->getToken()->getUser();
 
-            return is_object($user) ? $user->getUsername() : 'ANONYMOUS';
+            return is_object($user) ? $user->getUserIdentifier() : 'ANONYMOUS';
         })->bind('homepage');
 
         return $app;

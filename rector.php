@@ -16,5 +16,5 @@ return RectorConfig::configure()
     ->withDeadCodeLevel(0)
     ->withCodeQualityLevel(0)
     ->withSets([
-        SymfonySetList::SYMFONY_50_TYPES
+        SymfonySetList::SYMFONY_54
     ]);

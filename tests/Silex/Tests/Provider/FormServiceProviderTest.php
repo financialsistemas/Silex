@@ -24,6 +24,7 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\AbstractTypeExtension;
 use Symfony\Component\Form\Exception\InvalidArgumentException;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type\FormType;
 use Symfony\Component\Form\FormTypeGuesserChain;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\OptionsResolver\OptionsResolver;
@@ -295,7 +296,7 @@ class FormServiceProviderTest extends TestCase
         $app->register(new CsrfServiceProvider());
         $app['session.test'] = true;
 
-        $form = $app['form.factory']->createBuilder('Symfony\Component\Form\Extension\Core\Type\FormType', [])->getForm();
+        $form = $app['form.factory']->createBuilder(FormType::class, [])->getForm();
 
         $this->assertTrue(isset($form->createView()['_token']));
     }

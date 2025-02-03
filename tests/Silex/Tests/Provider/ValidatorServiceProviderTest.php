@@ -82,7 +82,6 @@ class ValidatorServiceProviderTest extends TestCase
     }
 
     /**
-     * @depends testRegister
      * @dataProvider getTestValidatorConstraintProvider
      */
     public function testValidatorConstraint($email, $isValid, $nbGlobalError, $nbEmailError)
@@ -102,8 +101,7 @@ class ValidatorServiceProviderTest extends TestCase
 
         $form = $builder
             ->add('email', 'Symfony\Component\Form\Extension\Core\Type\EmailType', ['label' => 'Email'])
-            ->getForm()
-        ;
+            ->getForm();
 
         $form->submit(['email' => $email]);
 

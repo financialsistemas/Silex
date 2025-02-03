@@ -34,7 +34,9 @@ trait SecurityTrait
      */
     public function encodePassword(UserInterface $user, $password)
     {
-        return $this['security.encoder_factory']->getEncoder($user)->encodePassword($password, $user->getSalt());
+        $encoderFactory = $this['security.encoder_factory']->getPasswordHasher($user);
+
+        return $encoderFactory->hash($password);
     }
 
     /**
