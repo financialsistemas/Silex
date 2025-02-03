@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Rector\Config\RectorConfig;
+use Rector\Exception\Configuration\InvalidConfigurationException;
 use Rector\Symfony\Set\SymfonySetList;
 
 try {
@@ -19,7 +20,6 @@ try {
         ->withSets([
             SymfonySetList::SYMFONY_54
         ]);
-} catch (\Rector\Exception\Configuration\InvalidConfigurationException $e) {
-    // skip
+} catch (InvalidConfigurationException $e) {
     return null;
 }
