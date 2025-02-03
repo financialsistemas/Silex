@@ -27,9 +27,7 @@ class ValidatorServiceProvider implements ServiceProviderInterface
 {
     public function register(Container $app)
     {
-        $app['validator'] = function ($app) {
-            return $app['validator.builder']->getValidator();
-        };
+        $app['validator'] = (fn($app) => $app['validator.builder']->getValidator());
 
         $app['validator.builder'] = function ($app) {
             $builder = Validation::createValidatorBuilder();
@@ -44,22 +42,14 @@ class ValidatorServiceProvider implements ServiceProviderInterface
             return $builder;
         };
 
-        $app['validator.mapping.class_metadata_factory'] = function ($app) {
-            return new LazyLoadingMetadataFactory(new StaticMethodLoader());
-        };
+        $app['validator.mapping.class_metadata_factory'] = (fn($app) => new LazyLoadingMetadataFactory(new StaticMethodLoader()));
 
-        $app['validator.validator_factory'] = function () use ($app) {
-            return new ConstraintValidatorFactory($app, $app['validator.validator_service_ids']);
-        };
+        $app['validator.validator_factory'] = (fn() => new ConstraintValidatorFactory($app, $app['validator.validator_service_ids']));
 
-        $app['validator.object_initializers'] = function ($app) {
-            return [];
-        };
+        $app['validator.object_initializers'] = (fn($app) => []);
 
         $app['validator.validator_service_ids'] = [];
 
-        $app['validator.translation_domain'] = function () {
-            return 'validators';
-        };
+        $app['validator.translation_domain'] = (fn() => 'validators');
     }
 }

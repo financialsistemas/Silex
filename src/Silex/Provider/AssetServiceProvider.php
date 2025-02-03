@@ -48,9 +48,7 @@ class AssetServiceProvider implements ServiceProviderInterface
             return $app['assets.package_factory']($app['assets.base_path'], $app['assets.base_urls'], $version, 'default');
         };
 
-        $app['assets.context'] = function ($app) {
-            return new RequestStackContext($app['request_stack']);
-        };
+        $app['assets.context'] = (fn($app) => new RequestStackContext($app['request_stack']));
 
         $app['assets.base_path'] = '';
         $app['assets.base_urls'] = [];

@@ -33,9 +33,7 @@ class SessionServiceProvider implements ServiceProviderInterface, EventListenerP
     {
         $app['session.test'] = false;
 
-        $app['session'] = function ($app) {
-            return new Session($app['session.storage'], $app['session.attribute_bag'], $app['session.flash_bag']);
-        };
+        $app['session'] = (fn($app) => new Session($app['session.storage'], $app['session.attribute_bag'], $app['session.flash_bag']));
 
         $app['session.storage'] = function ($app) {
             if ($app['session.test']) {
@@ -45,28 +43,18 @@ class SessionServiceProvider implements ServiceProviderInterface, EventListenerP
             return $app['session.storage.native'];
         };
 
-        $app['session.storage.handler'] = function ($app) {
-            return new NativeFileSessionHandler($app['session.storage.save_path']);
-        };
+        $app['session.storage.handler'] = (fn($app) => new NativeFileSessionHandler($app['session.storage.save_path']));
 
-        $app['session.storage.native'] = function ($app) {
-            return new NativeSessionStorage(
-                $app['session.storage.options'],
-                $app['session.storage.handler']
-            );
-        };
+        $app['session.storage.native'] = (fn($app) => new NativeSessionStorage(
+            $app['session.storage.options'],
+            $app['session.storage.handler']
+        ));
 
-        $app['session.listener'] = function ($app) {
-            return new SessionListener($app);
-        };
+        $app['session.listener'] = (fn($app) => new SessionListener($app));
 
-        $app['session.storage.test'] = function () {
-            return new MockFileSessionStorage();
-        };
+        $app['session.storage.test'] = (fn() => new MockFileSessionStorage());
 
-        $app['session.listener.test'] = function ($app) {
-            return new TestSessionListener($app);
-        };
+        $app['session.listener.test'] = (fn($app) => new TestSessionListener($app));
 
         $app['session.storage.options'] = [];
         $app['session.storage.save_path'] = null;

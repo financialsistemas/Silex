@@ -52,13 +52,9 @@ class SwiftmailerServiceProvider implements ServiceProviderInterface, EventListe
             return new Swift_Mailer($transport);
         };
 
-        $app['swiftmailer.spooltransport'] = function ($app) {
-            return new Swift_Transport_SpoolTransport($app['swiftmailer.transport.eventdispatcher'], $app['swiftmailer.spool']);
-        };
+        $app['swiftmailer.spooltransport'] = (fn($app) => new Swift_Transport_SpoolTransport($app['swiftmailer.transport.eventdispatcher'], $app['swiftmailer.spool']));
 
-        $app['swiftmailer.spool'] = function ($app) {
-            return new Swift_MemorySpool();
-        };
+        $app['swiftmailer.spool'] = (fn($app) => new Swift_MemorySpool());
 
         $app['swiftmailer.transport'] = function ($app) {
             $transport = new Swift_Transport_EsmtpTransport(
@@ -88,17 +84,13 @@ class SwiftmailerServiceProvider implements ServiceProviderInterface, EventListe
             return $transport;
         };
 
-        $app['swiftmailer.transport.buffer'] = function () {
-            return new Swift_Transport_StreamBuffer(new Swift_StreamFilters_StringReplacementFilterFactory());
-        };
+        $app['swiftmailer.transport.buffer'] = (fn() => new Swift_Transport_StreamBuffer(new Swift_StreamFilters_StringReplacementFilterFactory()));
 
-        $app['swiftmailer.transport.authhandler'] = function () {
-            return new Swift_Transport_Esmtp_AuthHandler([
-                new Swift_Transport_Esmtp_Auth_CramMd5Authenticator(),
-                new Swift_Transport_Esmtp_Auth_LoginAuthenticator(),
-                new Swift_Transport_Esmtp_Auth_PlainAuthenticator(),
-            ]);
-        };
+        $app['swiftmailer.transport.authhandler'] = (fn() => new Swift_Transport_Esmtp_AuthHandler([
+            new Swift_Transport_Esmtp_Auth_CramMd5Authenticator(),
+            new Swift_Transport_Esmtp_Auth_LoginAuthenticator(),
+            new Swift_Transport_Esmtp_Auth_PlainAuthenticator(),
+        ]));
 
         $app['swiftmailer.transport.eventdispatcher'] = function ($app) {
             $dispatcher = new Swift_Events_SimpleEventDispatcher();
@@ -123,9 +115,7 @@ class SwiftmailerServiceProvider implements ServiceProviderInterface, EventListe
             return $dispatcher;
         };
 
-        $app['swiftmailer.plugins'] = function ($app) {
-            return [];
-        };
+        $app['swiftmailer.plugins'] = (fn($app) => []);
 
         $app['swiftmailer.sender_address'] = null;
         $app['swiftmailer.delivery_addresses'] = [];

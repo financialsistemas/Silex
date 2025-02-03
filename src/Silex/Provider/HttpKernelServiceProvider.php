@@ -28,36 +28,20 @@ class HttpKernelServiceProvider implements ServiceProviderInterface, EventListen
      */
     public function register(Container $app)
     {
-        $app['resolver'] = function ($app) {
-            return new ControllerResolver($app['logger']);
-        };
+        $app['resolver'] = (fn($app) => new ControllerResolver($app['logger']));
 
-        $app['argument_metadata_factory'] = function ($app) {
-            return new ArgumentMetadataFactory();
-        };
-        $app['argument_value_resolvers'] = function ($app) {
-            return array_merge([new AppArgumentValueResolver($app)], ArgumentResolver::getDefaultArgumentValueResolvers());
-        };
+        $app['argument_metadata_factory'] = (fn($app) => new ArgumentMetadataFactory());
+        $app['argument_value_resolvers'] = (fn($app) => array_merge([new AppArgumentValueResolver($app)], ArgumentResolver::getDefaultArgumentValueResolvers()));
 
-        $app['argument_resolver'] = function ($app) {
-            return new ArgumentResolver($app['argument_metadata_factory'], $app['argument_value_resolvers']);
-        };
+        $app['argument_resolver'] = (fn($app) => new ArgumentResolver($app['argument_metadata_factory'], $app['argument_value_resolvers']));
 
-        $app['kernel'] = function ($app) {
-            return new HttpKernel($app['dispatcher'], $app['resolver'], $app['request_stack'], $app['argument_resolver']);
-        };
+        $app['kernel'] = (fn($app) => new HttpKernel($app['dispatcher'], $app['resolver'], $app['request_stack'], $app['argument_resolver']));
 
-        $app['request_stack'] = function () {
-            return new RequestStack();
-        };
+        $app['request_stack'] = (fn() => new RequestStack());
 
-        $app['dispatcher'] = function () {
-            return new EventDispatcher();
-        };
+        $app['dispatcher'] = (fn() => new EventDispatcher());
 
-        $app['callback_resolver'] = function ($app) {
-            return new CallbackResolver($app);
-        };
+        $app['callback_resolver'] = (fn($app) => new CallbackResolver($app));
     }
 
     public function subscribe(Container $app, EventDispatcherInterface $dispatcher)

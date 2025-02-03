@@ -35,9 +35,7 @@ class MonologServiceProvider implements ServiceProviderInterface, BootableProvid
 {
     public function register(Container $app)
     {
-        $app['logger'] = function () use ($app) {
-            return $app['monolog'];
-        };
+        $app['logger'] = (fn() => $app['monolog']);
 
         if ($bridge = class_exists(\Symfony\Bridge\Monolog\Logger::class)) {
             if (isset($app['request_stack'])) {
@@ -68,9 +66,7 @@ class MonologServiceProvider implements ServiceProviderInterface, BootableProvid
             return $log;
         };
 
-        $app['monolog.formatter'] = function () {
-            return new LineFormatter();
-        };
+        $app['monolog.formatter'] = (fn() => new LineFormatter());
 
         $app['monolog.handler'] = $defaultHandler = function () use ($app) {
             $level = self::translateLevel($app['monolog.level']);
@@ -92,22 +88,16 @@ class MonologServiceProvider implements ServiceProviderInterface, BootableProvid
             return $handlers;
         };
 
-        $app['monolog.level'] = function () {
-            return Logger::DEBUG;
-        };
+        $app['monolog.level'] = (fn() => Logger::DEBUG);
 
-        $app['monolog.listener'] = function () use ($app) {
-            return new LogListener($app['logger'], $app['monolog.exception.logger_filter']);
-        };
+        $app['monolog.listener'] = (fn() => new LogListener($app['logger'], $app['monolog.exception.logger_filter']));
 
         $app['monolog.name'] = 'app';
         $app['monolog.bubble'] = true;
         $app['monolog.permission'] = null;
         $app['monolog.exception.logger_filter'] = null;
         $app['monolog.logfile'] = null;
-        $app['monolog.use_error_handler'] = function ($app) {
-            return !$app['debug'];
-        };
+        $app['monolog.use_error_handler'] = (fn($app) => !$app['debug']);
     }
 
     public function boot(Application $app)

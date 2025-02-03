@@ -35,16 +35,10 @@ class SerializerServiceProvider implements ServiceProviderInterface
      */
     public function register(Container $app)
     {
-        $app['serializer'] = function ($app) {
-            return new Serializer($app['serializer.normalizers'], $app['serializer.encoders']);
-        };
+        $app['serializer'] = (fn($app) => new Serializer($app['serializer.normalizers'], $app['serializer.encoders']));
 
-        $app['serializer.encoders'] = function () {
-            return [new JsonEncoder(), new XmlEncoder()];
-        };
+        $app['serializer.encoders'] = (fn() => [new JsonEncoder(), new XmlEncoder()]);
 
-        $app['serializer.normalizers'] = function () {
-            return [new CustomNormalizer(), new GetSetMethodNormalizer()];
-        };
+        $app['serializer.normalizers'] = (fn() => [new CustomNormalizer(), new GetSetMethodNormalizer()]);
     }
 }

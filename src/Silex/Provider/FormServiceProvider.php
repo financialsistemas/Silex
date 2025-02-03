@@ -34,17 +34,11 @@ class FormServiceProvider implements ServiceProviderInterface
             throw new RuntimeException('You must either install the PHP intl extension or the Symfony Intl Component to use the Form extension.');
         }
 
-        $app['form.types'] = function ($app) {
-            return [];
-        };
+        $app['form.types'] = (fn($app) => []);
 
-        $app['form.type.extensions'] = function ($app) {
-            return [];
-        };
+        $app['form.type.extensions'] = (fn($app) => []);
 
-        $app['form.type.guessers'] = function ($app) {
-            return [];
-        };
+        $app['form.type.guessers'] = (fn($app) => []);
 
         $app['form.extension.csrf'] = function ($app) {
             if (isset($app['translator'])) {
@@ -56,9 +50,7 @@ class FormServiceProvider implements ServiceProviderInterface
             return new CsrfExtension($app['csrf.token_manager']);
         };
 
-        $app['form.extension.silex'] = function ($app) {
-            return new Form\SilexFormExtension($app, $app['form.types'], $app['form.type.extensions'], $app['form.type.guessers']);
-        };
+        $app['form.extension.silex'] = (fn($app) => new Form\SilexFormExtension($app, $app['form.types'], $app['form.type.extensions'], $app['form.type.guessers']));
 
         $app['form.extensions'] = function ($app) {
             $extensions = [
@@ -77,16 +69,10 @@ class FormServiceProvider implements ServiceProviderInterface
             return $extensions;
         };
 
-        $app['form.factory'] = function ($app) {
-            return new FormFactory($app['form.registry']);
-        };
+        $app['form.factory'] = (fn($app) => new FormFactory($app['form.registry']));
 
-        $app['form.registry'] = function ($app) {
-            return new FormRegistry($app['form.extensions'], $app['form.resolved_type_factory']);
-        };
+        $app['form.registry'] = (fn($app) => new FormRegistry($app['form.extensions'], $app['form.resolved_type_factory']));
 
-        $app['form.resolved_type_factory'] = function ($app) {
-            return new ResolvedFormTypeFactory();
-        };
+        $app['form.resolved_type_factory'] = (fn($app) => new ResolvedFormTypeFactory());
     }
 }

@@ -19,8 +19,6 @@ class ServiceControllerServiceProvider implements ServiceProviderInterface
 {
     public function register(Container $app)
     {
-        $app->extend('resolver', function ($resolver, $app) {
-            return new ServiceControllerResolver($resolver, $app['callback_resolver']);
-        });
+        $app->extend('resolver', fn($resolver, $app) => new ServiceControllerResolver($resolver, $app['callback_resolver']));
     }
 }

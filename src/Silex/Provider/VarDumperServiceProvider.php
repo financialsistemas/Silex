@@ -28,13 +28,9 @@ class VarDumperServiceProvider implements ServiceProviderInterface, BootableProv
 {
     public function register(Container $app)
     {
-        $app['var_dumper.cli_dumper'] = function ($app) {
-            return new CliDumper($app['var_dumper.dump_destination'], $app['charset']);
-        };
+        $app['var_dumper.cli_dumper'] = (fn($app) => new CliDumper($app['var_dumper.dump_destination'], $app['charset']));
 
-        $app['var_dumper.cloner'] = function ($app) {
-            return new VarCloner();
-        };
+        $app['var_dumper.cloner'] = (fn($app) => new VarCloner());
 
         $app['var_dumper.dump_destination'] = null;
     }

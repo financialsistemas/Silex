@@ -31,9 +31,7 @@ class HttpFragmentServiceProvider implements ServiceProviderInterface, EventList
 {
     public function register(Container $app)
     {
-        $app['fragment.handler'] = function ($app) {
-            return new FragmentHandler($app['request_stack'], $app['fragment.renderers'], $app['debug']);
-        };
+        $app['fragment.handler'] = (fn($app) => new FragmentHandler($app['request_stack'], $app['fragment.renderers'], $app['debug']));
 
         $app['fragment.renderer.inline'] = function ($app) {
             $renderer = new InlineFragmentRenderer($app['kernel'], $app['dispatcher']);
@@ -56,13 +54,9 @@ class HttpFragmentServiceProvider implements ServiceProviderInterface, EventList
             return $renderer;
         };
 
-        $app['fragment.listener'] = function ($app) {
-            return new FragmentListener($app['uri_signer'], $app['fragment.path']);
-        };
+        $app['fragment.listener'] = (fn($app) => new FragmentListener($app['uri_signer'], $app['fragment.path']));
 
-        $app['uri_signer'] = function ($app) {
-            return new UriSigner($app['uri_signer.secret']);
-        };
+        $app['uri_signer'] = (fn($app) => new UriSigner($app['uri_signer.secret']));
 
         $app['uri_signer.secret'] = md5(__DIR__);
         $app['fragment.path'] = '/_fragment';

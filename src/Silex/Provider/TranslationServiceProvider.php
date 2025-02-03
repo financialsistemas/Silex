@@ -75,18 +75,12 @@ class TranslationServiceProvider implements ServiceProviderInterface, EventListe
         };
 
         if (isset($app['request_stack'])) {
-            $app['translator.listener'] = function ($app) {
-                return new LocaleAwareListener([$app['translator']], $app['request_stack']);
-            };
+            $app['translator.listener'] = (fn($app) => new LocaleAwareListener([$app['translator']], $app['request_stack']));
         }
 
-        $app['translator.message_selector'] = function () {
-            return new MessageFormatter();
-        };
+        $app['translator.message_selector'] = (fn() => new MessageFormatter());
 
-        $app['translator.resources'] = function ($app) {
-            return [];
-        };
+        $app['translator.resources'] = (fn($app) => []);
 
         $app['translator.domains'] = [];
         $app['locale_fallbacks'] = ['en'];

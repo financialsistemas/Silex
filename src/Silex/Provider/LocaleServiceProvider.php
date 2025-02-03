@@ -26,9 +26,7 @@ class LocaleServiceProvider implements ServiceProviderInterface, EventListenerPr
 {
     public function register(Container $app)
     {
-        $app['locale.listener'] = function ($app) {
-            return new LocaleListener($app, $app['request_stack'], $app['locale'], $app['request_context'] ?? null);
-        };
+        $app['locale.listener'] = (fn($app) => new LocaleListener($app, $app['request_stack'], $app['locale'], $app['request_context'] ?? null));
 
         $app['locale'] = 'en';
     }

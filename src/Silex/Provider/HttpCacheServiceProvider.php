@@ -39,17 +39,11 @@ class HttpCacheServiceProvider implements ServiceProviderInterface, EventListene
             return new HttpCache($app, $app['http_cache.store'], $app['http_cache.esi'], $app['http_cache.options']);
         };
 
-        $app['http_cache.esi'] = function ($app) {
-            return new Esi();
-        };
+        $app['http_cache.esi'] = (fn($app) => new Esi());
 
-        $app['http_cache.store'] = function ($app) {
-            return new Store($app['http_cache.cache_dir']);
-        };
+        $app['http_cache.store'] = (fn($app) => new Store($app['http_cache.cache_dir']));
 
-        $app['http_cache.esi_listener'] = function ($app) {
-            return new SurrogateListener($app['http_cache.esi']);
-        };
+        $app['http_cache.esi_listener'] = (fn($app) => new SurrogateListener($app['http_cache.esi']));
 
         $app['http_cache.options'] = [];
     }

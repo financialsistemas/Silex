@@ -92,13 +92,9 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
         $app['security.access_rules'] = [];
         $app['security.hide_user_not_found'] = true;
 
-        $app['security.authorization_checker'] = function ($app) {
-            return new AuthorizationChecker($app['security.token_storage'], $app['security.authentication_manager'], $app['security.access_manager']);
-        };
+        $app['security.authorization_checker'] = (fn($app) => new AuthorizationChecker($app['security.token_storage'], $app['security.authentication_manager'], $app['security.access_manager']));
 
-        $app['security.token_storage'] = function () {
-            return new TokenStorage();
-        };
+        $app['security.token_storage'] = (fn() => new TokenStorage());
 
         $app['user'] = $app->factory(function ($app) {
             if (null === $token = $app['security.token_storage']->getToken()) {
@@ -120,49 +116,31 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
         };
 
         // by default, all users use the digest encoder
-        $app['security.encoder_factory'] = function ($app) {
-            return new PasswordHasherFactory([
-                UserInterface::class => $app['security.default_encoder'],
-            ]);
-        };
+        $app['security.encoder_factory'] = (fn($app) => new PasswordHasherFactory([
+            UserInterface::class => $app['security.default_encoder'],
+        ]));
 
         // by default, all users use the native encoder
-        $app['security.default_encoder'] = function ($app) {
-            return $app['security.encoder.native'];
-        };
+        $app['security.default_encoder'] = (fn($app) => $app['security.encoder.native']);
 
-        $app['security.encoder.digest'] = function ($app) {
-            return new MessageDigestPasswordHasher();
-        };
+        $app['security.encoder.digest'] = (fn($app) => new MessageDigestPasswordHasher());
 
-        $app['security.encoder.pbkdf2'] = function ($app) {
-            return new Pbkdf2PasswordHasher();
-        };
+        $app['security.encoder.pbkdf2'] = (fn($app) => new Pbkdf2PasswordHasher());
 
-        $app['security.encoder.native'] = function ($app) {
-            return new NativePasswordHasher();
-        };
+        $app['security.encoder.native'] = (fn($app) => new NativePasswordHasher());
 
-        $app['security.user_checker'] = function ($app) {
-            return new InMemoryUserChecker();
-        };
+        $app['security.user_checker'] = (fn($app) => new InMemoryUserChecker());
 
-        $app['security.access_manager'] = function ($app) {
-            return new AccessDecisionManager($app['security.voters']);
-        };
+        $app['security.access_manager'] = (fn($app) => new AccessDecisionManager($app['security.voters']));
 
-        $app['security.voters'] = function ($app) {
-            return [
-                new RoleHierarchyVoter(new RoleHierarchy($app['security.role_hierarchy'])),
-                new AuthenticatedVoter($app['security.trust_resolver']),
-            ];
-        };
+        $app['security.voters'] = (fn($app) => [
+            new RoleHierarchyVoter(new RoleHierarchy($app['security.role_hierarchy'])),
+            new AuthenticatedVoter($app['security.trust_resolver']),
+        ]);
 
         $app['security.firewall'] = function ($app) {
             if (isset($app['validator'])) {
-                $app['security.validator.user_password_validator'] = function ($app) {
-                    return new UserPasswordValidator($app['security.token_storage'], $app['security.encoder_factory']);
-                };
+                $app['security.validator.user_password_validator'] = (fn($app) => new UserPasswordValidator($app['security.token_storage'], $app['security.encoder_factory']));
 
                 $app['validator.validator_service_ids'] = array_merge($app['validator.validator_service_ids'], ['security.validator.user_password' => 'security.validator.user_password_validator']);
             }
@@ -170,16 +148,14 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
             return new Firewall($app['security.firewall_map'], $app['dispatcher']);
         };
 
-        $app['security.channel_listener'] = function ($app) {
-            return new ChannelListener(
-                $app['security.access_map'],
-                new RetryAuthenticationEntryPoint(
-                    $app['request.http_port'] ?? 80,
-                    $app['request.https_port'] ?? 443
-                ),
-                $app['logger']
-            );
-        };
+        $app['security.channel_listener'] = (fn($app) => new ChannelListener(
+            $app['security.access_map'],
+            new RetryAuthenticationEntryPoint(
+                $app['request.http_port'] ?? 80,
+                $app['request.https_port'] ?? 443
+            ),
+            $app['logger']
+        ));
 
         // generate the build-in authentication factories
         foreach (['logout', 'pre_auth', 'guard', 'form', 'http', 'remember_me', 'anonymous'] as $type) {
@@ -238,9 +214,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                 $listeners = ['security.channel_listener'];
 
                 if (is_string($users)) {
-                    $users = function () use ($app, $users) {
-                        return $app[$users];
-                    };
+                    $users = (fn() => $app[$users]);
                 }
 
                 if ($protected) {
@@ -325,9 +299,7 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
                 ];
             }
 
-            $app['security.authentication_providers'] = array_map(function ($provider) use ($app) {
-                return $app[$provider];
-            }, array_unique($providers));
+            $app['security.authentication_providers'] = array_map(fn($provider) => $app[$provider], array_unique($providers));
 
             $map = new FirewallMap();
             foreach ($configs as $name => $config) {
@@ -367,15 +339,13 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
             return $map;
         };
 
-        $app['security.access_listener'] = function ($app) {
-            return new AccessListener(
-                $app['security.token_storage'],
-                $app['security.access_manager'],
-                $app['security.access_map'],
-                $app['security.authentication_manager'],
-                $app['security.exception_on_no_token']
-            );
-        };
+        $app['security.access_listener'] = (fn($app) => new AccessListener(
+            $app['security.token_storage'],
+            $app['security.access_manager'],
+            $app['security.access_map'],
+            $app['security.authentication_manager'],
+            $app['security.exception_on_no_token']
+        ));
 
         $app['security.access_map'] = function ($app) {
             $map = new AccessMap();
@@ -400,17 +370,11 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
             return $map;
         };
 
-        $app['security.trust_resolver'] = function ($app) {
-            return new AuthenticationTrustResolver();
-        };
+        $app['security.trust_resolver'] = (fn($app) => new AuthenticationTrustResolver());
 
-        $app['security.session_strategy'] = function ($app) {
-            return new SessionAuthenticationStrategy(SessionAuthenticationStrategy::MIGRATE);
-        };
+        $app['security.session_strategy'] = (fn($app) => new SessionAuthenticationStrategy(SessionAuthenticationStrategy::MIGRATE));
 
-        $app['security.http_utils'] = function ($app) {
-            return new HttpUtils($app['url_generator'], $app['request_matcher']);
-        };
+        $app['security.http_utils'] = (fn($app) => new HttpUtils($app['url_generator'], $app['request_matcher']));
 
         $app['security.last_error'] = $app->protect(function (Request $request) {
             if ($request->attributes->has(Security::AUTHENTICATION_ERROR)) {
@@ -430,219 +394,173 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
 
         // prototypes (used by the Firewall Map)
 
-        $app['security.context_listener._proto'] = $app->protect(function ($providerKey, $userProviders) use ($app) {
-            return function () use ($app, $userProviders, $providerKey) {
-                return new ContextListener(
-                    $app['security.token_storage'],
-                    $userProviders,
-                    $providerKey,
-                    $app['logger'],
-                    $app['dispatcher']
-                );
-            };
+        $app['security.context_listener._proto'] = $app->protect(fn($providerKey, $userProviders) => fn() => new ContextListener(
+            $app['security.token_storage'],
+            $userProviders,
+            $providerKey,
+            $app['logger'],
+            $app['dispatcher']
+        ));
+
+        $app['security.user_provider.inmemory._proto'] = $app->protect(fn($params) => function () use ($app, $params) {
+            $users = array_map(fn($user) => ['roles' => (array)$user[0], 'password' => $user[1]], $params);
+
+            return new InMemoryUserProvider($users);
         });
 
-        $app['security.user_provider.inmemory._proto'] = $app->protect(function ($params) use ($app) {
-            return function () use ($app, $params) {
-                $users = array_map(function ($user) {
-                    return ['roles' => (array)$user[0], 'password' => $user[1]];
-                }, $params);
+        $app['security.exception_listener._proto'] = $app->protect(fn($entryPoint, $name, $accessDeniedHandler = null) => fn() => new ExceptionListener(
+            $app['security.token_storage'],
+            $app['security.trust_resolver'],
+            $app['security.http_utils'],
+            $name,
+            $app[$entryPoint],
+            null, // errorPage
+            $accessDeniedHandler,
+            $app['logger']
+        ));
 
-                return new InMemoryUserProvider($users);
-            };
+        $app['security.authentication.success_handler._proto'] = $app->protect(fn($name, $options) => function () use ($name, $options, $app) {
+            $handler = new DefaultAuthenticationSuccessHandler(
+                $app['security.http_utils'],
+                $options
+            );
+            $handler->setFirewallName($name);
+
+            return $handler;
         });
 
-        $app['security.exception_listener._proto'] = $app->protect(function ($entryPoint, $name, $accessDeniedHandler = null) use ($app) {
-            return function () use ($app, $entryPoint, $name, $accessDeniedHandler) {
-                return new ExceptionListener(
-                    $app['security.token_storage'],
-                    $app['security.trust_resolver'],
-                    $app['security.http_utils'],
-                    $name,
-                    $app[$entryPoint],
-                    null, // errorPage
-                    $accessDeniedHandler,
-                    $app['logger']
-                );
-            };
+        $app['security.authentication.failure_handler._proto'] = $app->protect(fn($name, $options) => fn() => new DefaultAuthenticationFailureHandler(
+            $app,
+            $app['security.http_utils'],
+            $options,
+            $app['logger']
+        ));
+
+        $app['security.authentication_listener.guard._proto'] = $app->protect(fn($providerKey, $options) => function () use ($app, $providerKey, $options, $that) {
+            if (!isset($app['security.authentication.guard_handler'])) {
+                $app['security.authentication.guard_handler'] = new GuardAuthenticatorHandler($app['security.token_storage'], $app['dispatcher']);
+            }
+
+            $authenticators = [];
+            foreach ($options['authenticators'] as $authenticatorId) {
+                $authenticators[] = $app[$authenticatorId];
+            }
+
+            return new GuardAuthenticationListener(
+                $app['security.authentication.guard_handler'],
+                $app['security.authentication_manager'],
+                $providerKey,
+                $authenticators,
+                $app['logger'],
+                false
+            );
         });
 
-        $app['security.authentication.success_handler._proto'] = $app->protect(function ($name, $options) use ($app) {
-            return function () use ($name, $options, $app) {
-                $handler = new DefaultAuthenticationSuccessHandler(
-                    $app['security.http_utils'],
-                    $options
-                );
-                $handler->setFirewallName($name);
+        $app['security.authentication_listener.form._proto'] = $app->protect(fn($name, $options) => function () use ($app, $name, $options, $that) {
+            $that->addFakeRoute(
+                'match',
+                $tmp = $options['check_path'] ?? '/login_check',
+                str_replace('/', '_', ltrim($tmp, '/'))
+            );
 
-                return $handler;
-            };
+            $class = $options['listener_class'] ?? UsernamePasswordFormAuthenticationListener::class;
+
+            if (!isset($app['security.authentication.success_handler.' . $name])) {
+                $app['security.authentication.success_handler.' . $name] = $app['security.authentication.success_handler._proto']($name, $options);
+            }
+
+            if (!isset($app['security.authentication.failure_handler.' . $name])) {
+                $app['security.authentication.failure_handler.' . $name] = $app['security.authentication.failure_handler._proto']($name, $options);
+            }
+
+            return new $class(
+                $app['security.token_storage'],
+                $app['security.authentication_manager'],
+                $app['security.session_strategy.' . $name] ?? $app['security.session_strategy'],
+                $app['security.http_utils'],
+                $name,
+                $app['security.authentication.success_handler.' . $name],
+                $app['security.authentication.failure_handler.' . $name],
+                $options,
+                $app['logger'],
+                $app['dispatcher'],
+                isset($options['with_csrf']) && $options['with_csrf'] && isset($app['csrf.token_manager']) ? $app['csrf.token_manager'] : null
+            );
         });
 
-        $app['security.authentication.failure_handler._proto'] = $app->protect(function ($name, $options) use ($app) {
-            return function () use ($name, $options, $app) {
-                return new DefaultAuthenticationFailureHandler(
-                    $app,
-                    $app['security.http_utils'],
-                    $options,
-                    $app['logger']
-                );
-            };
+        $app['security.authentication_listener.http._proto'] = $app->protect(fn($providerKey, $options) => fn() => new BasicAuthenticationListener(
+            $app['security.token_storage'],
+            $app['security.authentication_manager'],
+            $providerKey,
+            $app['security.entry_point.' . $providerKey . '.http'],
+            $app['logger']
+        ));
+
+        $app['security.authentication_listener.anonymous._proto'] = $app->protect(fn($providerKey, $options) => fn() => new AnonymousAuthenticationListener(
+            $app['security.token_storage'],
+            $providerKey,
+            $app['logger']
+        ));
+
+        $app['security.authentication.logout_handler._proto'] = $app->protect(fn($name, $options) => fn() => new DefaultLogoutSuccessHandler(
+            $app['security.http_utils'],
+            $options['target_url'] ?? '/'
+        ));
+
+        $app['security.authentication_listener.logout._proto'] = $app->protect(fn($name, $options) => function () use ($app, $name, $options, $that) {
+            $that->addFakeRoute(
+                'get',
+                $tmp = $options['logout_path'] ?? '/logout',
+                str_replace('/', '_', ltrim($tmp, '/'))
+            );
+
+            if (!isset($app['security.authentication.logout_handler.' . $name])) {
+                $app['security.authentication.logout_handler.' . $name] = $app['security.authentication.logout_handler._proto']($name, $options);
+            }
+
+            $listener = new LogoutListener(
+                $app['security.token_storage'],
+                $app['security.http_utils'],
+                $app['security.authentication.logout_handler.' . $name],
+                $options,
+                isset($options['with_csrf']) && $options['with_csrf'] && isset($app['csrf.token_manager']) ? $app['csrf.token_manager'] : null
+            );
+
+            $invalidateSession = $options['invalidate_session'] ?? true;
+            if (true === $invalidateSession && false === $options['stateless']) {
+                $app['dispatcher']->addListener(LogoutEvent::class, function (LogoutEvent $event): void {
+                    $handler = new SessionLogoutListener();
+                    if (null === $event->getResponse()) {
+                        throw new LogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', self::class));
+                    }
+
+                    $handler->onLogout($event);
+                });
+            }
+
+            return $listener;
         });
 
-        $app['security.authentication_listener.guard._proto'] = $app->protect(function ($providerKey, $options) use ($app, $that) {
-            return function () use ($app, $providerKey, $options, $that) {
-                if (!isset($app['security.authentication.guard_handler'])) {
-                    $app['security.authentication.guard_handler'] = new GuardAuthenticatorHandler($app['security.token_storage'], $app['dispatcher']);
-                }
+        $app['security.authentication_listener.switch_user._proto'] = $app->protect(fn($name, $options) => fn() => new SwitchUserListener(
+            $app['security.token_storage'],
+            $app['security.user_provider.' . $name],
+            $app['security.user_checker'],
+            $name,
+            $app['security.access_manager'],
+            $app['logger'],
+            $options['parameter'] ?? '_switch_user',
+            $options['role'] ?? 'ROLE_ALLOWED_TO_SWITCH',
+            $app['dispatcher']
+        ));
 
-                $authenticators = [];
-                foreach ($options['authenticators'] as $authenticatorId) {
-                    $authenticators[] = $app[$authenticatorId];
-                }
+        $app['security.entry_point.form._proto'] = $app->protect(fn($name, array $options) => function () use ($app, $options) {
+            $loginPath = $options['login_path'] ?? '/login';
+            $useForward = $options['use_forward'] ?? false;
 
-                return new GuardAuthenticationListener(
-                    $app['security.authentication.guard_handler'],
-                    $app['security.authentication_manager'],
-                    $providerKey,
-                    $authenticators,
-                    $app['logger'],
-                    false
-                );
-            };
+            return new FormAuthenticationEntryPoint($app, $app['security.http_utils'], $loginPath, $useForward);
         });
 
-        $app['security.authentication_listener.form._proto'] = $app->protect(function ($name, $options) use ($app, $that) {
-            return function () use ($app, $name, $options, $that) {
-                $that->addFakeRoute(
-                    'match',
-                    $tmp = $options['check_path'] ?? '/login_check',
-                    str_replace('/', '_', ltrim($tmp, '/'))
-                );
-
-                $class = $options['listener_class'] ?? UsernamePasswordFormAuthenticationListener::class;
-
-                if (!isset($app['security.authentication.success_handler.' . $name])) {
-                    $app['security.authentication.success_handler.' . $name] = $app['security.authentication.success_handler._proto']($name, $options);
-                }
-
-                if (!isset($app['security.authentication.failure_handler.' . $name])) {
-                    $app['security.authentication.failure_handler.' . $name] = $app['security.authentication.failure_handler._proto']($name, $options);
-                }
-
-                return new $class(
-                    $app['security.token_storage'],
-                    $app['security.authentication_manager'],
-                    $app['security.session_strategy.' . $name] ?? $app['security.session_strategy'],
-                    $app['security.http_utils'],
-                    $name,
-                    $app['security.authentication.success_handler.' . $name],
-                    $app['security.authentication.failure_handler.' . $name],
-                    $options,
-                    $app['logger'],
-                    $app['dispatcher'],
-                    isset($options['with_csrf']) && $options['with_csrf'] && isset($app['csrf.token_manager']) ? $app['csrf.token_manager'] : null
-                );
-            };
-        });
-
-        $app['security.authentication_listener.http._proto'] = $app->protect(function ($providerKey, $options) use ($app) {
-            return function () use ($app, $providerKey) {
-                return new BasicAuthenticationListener(
-                    $app['security.token_storage'],
-                    $app['security.authentication_manager'],
-                    $providerKey,
-                    $app['security.entry_point.' . $providerKey . '.http'],
-                    $app['logger']
-                );
-            };
-        });
-
-        $app['security.authentication_listener.anonymous._proto'] = $app->protect(function ($providerKey, $options) use ($app) {
-            return function () use ($app, $providerKey) {
-                return new AnonymousAuthenticationListener(
-                    $app['security.token_storage'],
-                    $providerKey,
-                    $app['logger']
-                );
-            };
-        });
-
-        $app['security.authentication.logout_handler._proto'] = $app->protect(function ($name, $options) use ($app) {
-            return function () use ($options, $app) {
-                return new DefaultLogoutSuccessHandler(
-                    $app['security.http_utils'],
-                    $options['target_url'] ?? '/'
-                );
-            };
-        });
-
-        $app['security.authentication_listener.logout._proto'] = $app->protect(function ($name, $options) use ($app, $that) {
-            return function () use ($app, $name, $options, $that) {
-                $that->addFakeRoute(
-                    'get',
-                    $tmp = $options['logout_path'] ?? '/logout',
-                    str_replace('/', '_', ltrim($tmp, '/'))
-                );
-
-                if (!isset($app['security.authentication.logout_handler.' . $name])) {
-                    $app['security.authentication.logout_handler.' . $name] = $app['security.authentication.logout_handler._proto']($name, $options);
-                }
-
-                $listener = new LogoutListener(
-                    $app['security.token_storage'],
-                    $app['security.http_utils'],
-                    $app['security.authentication.logout_handler.' . $name],
-                    $options,
-                    isset($options['with_csrf']) && $options['with_csrf'] && isset($app['csrf.token_manager']) ? $app['csrf.token_manager'] : null
-                );
-
-                $invalidateSession = $options['invalidate_session'] ?? true;
-                if (true === $invalidateSession && false === $options['stateless']) {
-                    $app['dispatcher']->addListener(LogoutEvent::class, function (LogoutEvent $event): void {
-                        $handler = new SessionLogoutListener();
-                        if (null === $event->getResponse()) {
-                            throw new LogicException(sprintf('No response was set for this logout action. Make sure the DefaultLogoutListener or another listener has set the response before "%s" is called.', self::class));
-                        }
-
-                        $handler->onLogout($event);
-                    });
-                }
-
-                return $listener;
-            };
-        });
-
-        $app['security.authentication_listener.switch_user._proto'] = $app->protect(function ($name, $options) use ($app) {
-            return function () use ($app, $name, $options) {
-                return new SwitchUserListener(
-                    $app['security.token_storage'],
-                    $app['security.user_provider.' . $name],
-                    $app['security.user_checker'],
-                    $name,
-                    $app['security.access_manager'],
-                    $app['logger'],
-                    $options['parameter'] ?? '_switch_user',
-                    $options['role'] ?? 'ROLE_ALLOWED_TO_SWITCH',
-                    $app['dispatcher']
-                );
-            };
-        });
-
-        $app['security.entry_point.form._proto'] = $app->protect(function ($name, array $options) use ($app) {
-            return function () use ($app, $options) {
-                $loginPath = $options['login_path'] ?? '/login';
-                $useForward = $options['use_forward'] ?? false;
-
-                return new FormAuthenticationEntryPoint($app, $app['security.http_utils'], $loginPath, $useForward);
-            };
-        });
-
-        $app['security.entry_point.http._proto'] = $app->protect(function ($name, array $options) use ($app) {
-            return function () use ($app, $name, $options) {
-                return new BasicAuthenticationEntryPoint($options['real_name'] ?? 'Secured');
-            };
-        });
+        $app['security.entry_point.http._proto'] = $app->protect(fn($name, array $options) => fn() => new BasicAuthenticationEntryPoint($options['real_name'] ?? 'Secured'));
 
         $app['security.entry_point.guard._proto'] = $app->protect(function ($name, array $options) use ($app) {
             if (isset($options['entry_point'])) {
@@ -661,48 +579,34 @@ class SecurityServiceProvider implements ServiceProviderInterface, EventListener
             ));
         });
 
-        $app['security.authentication_provider.dao._proto'] = $app->protect(function ($name, $options) use ($app) {
-            return function () use ($app, $name) {
-                return new DaoAuthenticationProvider(
-                    $app['security.user_provider.' . $name],
-                    $app['security.user_checker'],
-                    $name,
-                    $app['security.encoder_factory'],
-                    $app['security.hide_user_not_found']
-                );
-            };
+        $app['security.authentication_provider.dao._proto'] = $app->protect(fn($name, $options) => fn() => new DaoAuthenticationProvider(
+            $app['security.user_provider.' . $name],
+            $app['security.user_checker'],
+            $name,
+            $app['security.encoder_factory'],
+            $app['security.hide_user_not_found']
+        ));
+
+        $app['security.authentication_provider.guard._proto'] = $app->protect(fn($name, $options) => function () use ($app, $name, $options) {
+            $authenticators = [];
+            foreach ($options['authenticators'] as $authenticatorId) {
+                $authenticators[] = $app[$authenticatorId];
+            }
+
+            return new GuardAuthenticationProvider(
+                $authenticators,
+                $app['security.user_provider.' . $name],
+                $name,
+                $app['security.user_checker'],
+                new UserPasswordHasher($app['security.encoder_factory'])
+            );
         });
 
-        $app['security.authentication_provider.guard._proto'] = $app->protect(function ($name, $options) use ($app) {
-            return function () use ($app, $name, $options) {
-                $authenticators = [];
-                foreach ($options['authenticators'] as $authenticatorId) {
-                    $authenticators[] = $app[$authenticatorId];
-                }
+        $app['security.authentication_provider.anonymous._proto'] = $app->protect(fn($name, $options) => fn() => new AnonymousAuthenticationProvider($name));
 
-                return new GuardAuthenticationProvider(
-                    $authenticators,
-                    $app['security.user_provider.' . $name],
-                    $name,
-                    $app['security.user_checker'],
-                    new UserPasswordHasher($app['security.encoder_factory'])
-                );
-            };
-        });
+        $app['security.authentication_utils'] = (fn($app) => new AuthenticationUtils($app['request_stack']));
 
-        $app['security.authentication_provider.anonymous._proto'] = $app->protect(function ($name, $options) use ($app) {
-            return function () use ($app, $name) {
-                return new AnonymousAuthenticationProvider($name);
-            };
-        });
-
-        $app['security.authentication_utils'] = function ($app) {
-            return new AuthenticationUtils($app['request_stack']);
-        };
-
-        $app['security.exception_on_no_token'] = function ($app) {
-            return true;
-        };
+        $app['security.exception_on_no_token'] = (fn($app) => true);
     }
 
     public function subscribe(Container $app, EventDispatcherInterface $dispatcher)

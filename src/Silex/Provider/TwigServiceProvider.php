@@ -127,9 +127,7 @@ class TwigServiceProvider implements ServiceProviderInterface
                 }
 
                 if (isset($app['form.factory'])) {
-                    $app['twig.form.engine'] = function ($app) use ($twig) {
-                        return new TwigRendererEngine($app['twig.form.templates'], $twig);
-                    };
+                    $app['twig.form.engine'] = (fn($app) => new TwigRendererEngine($app['twig.form.templates'], $twig));
 
                     $app['twig.form.renderer'] = function ($app) {
                         $csrfTokenManager = $app['csrf.token_manager'] ?? null;
@@ -169,38 +167,26 @@ class TwigServiceProvider implements ServiceProviderInterface
             return $loader;
         };
 
-        $app['twig.loader.array'] = function ($app) {
-            return new ArrayLoader($app['twig.templates']);
-        };
+        $app['twig.loader.array'] = (fn($app) => new ArrayLoader($app['twig.templates']));
 
-        $app['twig.loader'] = function ($app) {
-            return new ChainLoader([
-                $app['twig.loader.array'],
-                $app['twig.loader.filesystem'],
-            ]);
-        };
+        $app['twig.loader'] = (fn($app) => new ChainLoader([
+            $app['twig.loader.array'],
+            $app['twig.loader.filesystem'],
+        ]));
 
-        $app['twig.environment_factory'] = $app->protect(function ($app) {
-            return new TwigEnvironment($app['twig.loader'], array_replace([
-                'charset' => $app['charset'],
-                'debug' => $app['debug'],
-                'strict_variables' => $app['debug'],
-            ], $app['twig.options']));
-        });
+        $app['twig.environment_factory'] = $app->protect(fn($app) => new TwigEnvironment($app['twig.loader'], array_replace([
+            'charset' => $app['charset'],
+            'debug' => $app['debug'],
+            'strict_variables' => $app['debug'],
+        ], $app['twig.options'])));
 
-        $app['twig.runtime.httpkernel'] = function ($app) {
-            return new HttpKernelRuntime($app['fragment.handler']);
-        };
+        $app['twig.runtime.httpkernel'] = (fn($app) => new HttpKernelRuntime($app['fragment.handler']));
 
-        $app['twig.runtimes'] = function ($app) {
-            return [
-                HttpKernelRuntime::class => 'twig.runtime.httpkernel',
-                FormRenderer::class => 'twig.form.renderer',
-            ];
-        };
+        $app['twig.runtimes'] = (fn($app) => [
+            HttpKernelRuntime::class => 'twig.runtime.httpkernel',
+            FormRenderer::class => 'twig.form.renderer',
+        ]);
 
-        $app['twig.runtime_loader'] = function ($app) {
-            return new RuntimeLoader($app, $app['twig.runtimes']);
-        };
+        $app['twig.runtime_loader'] = (fn($app) => new RuntimeLoader($app, $app['twig.runtimes']));
     }
 }

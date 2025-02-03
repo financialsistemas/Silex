@@ -35,24 +35,14 @@ class RoutingServiceProvider implements ServiceProviderInterface, EventListenerP
     {
         $app['route_class'] = Route::class;
 
-        $app['route_factory'] = $app->factory(function ($app) {
-            return new $app['route_class']();
-        });
+        $app['route_factory'] = $app->factory(fn($app) => new $app['route_class']());
 
-        $app['routes_factory'] = $app->factory(function () {
-            return new RouteCollection();
-        });
+        $app['routes_factory'] = $app->factory(fn() => new RouteCollection());
 
-        $app['routes'] = function ($app) {
-            return $app['routes_factory'];
-        };
-        $app['url_generator'] = function ($app) {
-            return new UrlGenerator($app['routes'], $app['request_context']);
-        };
+        $app['routes'] = (fn($app) => $app['routes_factory']);
+        $app['url_generator'] = (fn($app) => new UrlGenerator($app['routes'], $app['request_context']));
 
-        $app['request_matcher'] = function ($app) {
-            return new RedirectableUrlMatcher($app['routes'], $app['request_context']);
-        };
+        $app['request_matcher'] = (fn($app) => new RedirectableUrlMatcher($app['routes'], $app['request_context']));
 
         $app['request_context'] = function ($app) {
             $context = new RequestContext();
@@ -63,9 +53,7 @@ class RoutingServiceProvider implements ServiceProviderInterface, EventListenerP
             return $context;
         };
 
-        $app['controllers'] = function ($app) {
-            return $app['controllers_factory'];
-        };
+        $app['controllers'] = (fn($app) => $app['controllers_factory']);
 
         $controllersFactory = function () use ($app, &$controllersFactory) {
             return new ControllerCollection($app['route_factory'], $app['routes_factory'], $controllersFactory);
@@ -73,9 +61,7 @@ class RoutingServiceProvider implements ServiceProviderInterface, EventListenerP
         $app['controllers_factory'] = $app->factory($controllersFactory);
 
         $app['routing.listener'] = function ($app) {
-            $urlMatcher = new LazyRequestMatcher(function () use ($app) {
-                return $app['request_matcher'];
-            });
+            $urlMatcher = new LazyRequestMatcher(fn() => $app['request_matcher']);
 
             return new RouterListener($urlMatcher, $app['request_stack'], $app['request_context'], $app['logger'], null, $app['debug'] ?? false);
         };

@@ -15,9 +15,7 @@ class ExceptionHandlerServiceProvider implements ServiceProviderInterface, Event
      */
     public function register(Container $app)
     {
-        $app['exception_handler'] = function ($app) {
-            return new ExceptionHandler($app['debug']);
-        };
+        $app['exception_handler'] = (fn($app) => new ExceptionHandler($app['debug']));
     }
 
     /**
