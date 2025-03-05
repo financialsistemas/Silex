@@ -41,8 +41,9 @@ class MonologServiceProvider implements ServiceProviderInterface, BootableProvid
             if (isset($app['request_stack'])) {
                 $app['monolog.not_found_activation_strategy'] = function () use ($app) {
                     $level = self::translateLevel($app['monolog.level']);
+                    $inner = new Handler\FingersCrossed\ChannelLevelActivationStrategy($level);
 
-                    return new NotFoundActivationStrategy($app['request_stack'], ['^/'], $level);
+                    return new NotFoundActivationStrategy($app['request_stack'], ['^/'], $inner);
                 };
             }
         }

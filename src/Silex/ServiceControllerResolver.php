@@ -39,16 +39,23 @@ class ServiceControllerResolver implements ControllerResolverInterface
     /**
      * {@inheritdoc}
      */
-    public function getController(Request $request)
+    public function getController(Request $request): callable|false
     {
-        $controller = $request->attributes->get('_controller', null);
+        $controller = $request->attributes->get('_controller');
 
         if (!$this->callbackResolver->isValid($controller)) {
-            return $this->controllerResolver->getController($request);
+            $resolvedController = $this->controllerResolver->getController($request);
+
+            if (is_callable($resolvedController)) {
+                return $resolvedController;
+            }
+
+            return false;
         }
 
         return $this->callbackResolver->convertCallback($controller);
     }
+
 
     public function getArguments(Request $request, $controller)
     {

@@ -396,10 +396,10 @@ class SecurityServiceProviderTest extends WebTestCase
         $request = Request::create('/admin');
         $app->boot();
         $accessMap = $app['security.access_map'];
-        $this->assertEquals($accessMap->getPatterns($request), [
+        $this->assertEquals([
             ['ROLE_ADMIN'],
             '',
-        ]);
+        ], $accessMap->getPatterns($request));
     }
 
     public function createApplication($authenticationMethod = 'form'): HttpKernelInterface

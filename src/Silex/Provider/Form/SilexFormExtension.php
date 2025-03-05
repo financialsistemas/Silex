@@ -15,6 +15,8 @@ use Pimple\Container;
 use Symfony\Component\Form\Exception\InvalidArgumentException;
 use Symfony\Component\Form\FormExtensionInterface;
 use Symfony\Component\Form\FormTypeGuesserChain;
+use Symfony\Component\Form\FormTypeGuesserInterface;
+use Symfony\Component\Form\FormTypeInterface;
 
 class SilexFormExtension implements FormExtensionInterface
 {
@@ -33,7 +35,7 @@ class SilexFormExtension implements FormExtensionInterface
         $this->setGuessers($guessers);
     }
 
-    public function getType($name)
+    public function getType($name): FormTypeInterface
     {
         if (!isset($this->types[$name])) {
             throw new InvalidArgumentException(sprintf('The type "%s" is not the name of a registered form type.', $name));
@@ -45,22 +47,22 @@ class SilexFormExtension implements FormExtensionInterface
         return $this->types[$name];
     }
 
-    public function hasType($name)
+    public function hasType($name): bool
     {
         return isset($this->types[$name]);
     }
 
-    public function getTypeExtensions(string $name)
+    public function getTypeExtensions(string $name): array
     {
         return $this->typeExtensions[$name] ?? [];
     }
 
-    public function hasTypeExtensions(string $name)
+    public function hasTypeExtensions(string $name): bool
     {
         return isset($this->typeExtensions[$name]);
     }
 
-    public function getTypeGuesser()
+    public function getTypeGuesser(): ?FormTypeGuesserInterface
     {
         if (!$this->guesserLoaded) {
             $this->guesserLoaded = true;

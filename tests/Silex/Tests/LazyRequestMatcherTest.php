@@ -66,13 +66,14 @@ class LazyRequestMatcherTest extends TestCase
         $matcher->expects($this->once())
             ->method('matchRequest')
             ->with($request)
-            ->willReturn('matcherReturnValue');
+            ->willReturn(['matcherReturnValue' => 'someValue']);
 
         $matcher = new LazyRequestMatcher(function () use ($matcher) {
             return $matcher;
         });
         $result = $matcher->matchRequest($request);
 
-        $this->assertEquals('matcherReturnValue', $result);
+        $this->assertArrayHasKey('matcherReturnValue', $result);
+        $this->assertEquals('someValue', $result['matcherReturnValue']);
     }
 }

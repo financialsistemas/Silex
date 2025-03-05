@@ -28,8 +28,7 @@ class SecurityTraitTest extends TestCase
         $app = $this->createApplication();
 
         $app->get('/', function () { return 'foo'; })
-            ->secure('ROLE_ADMIN')
-        ;
+            ->secure('ROLE_ADMIN');
 
         $request = Request::create('/');
         $response = $app->handle($request);
