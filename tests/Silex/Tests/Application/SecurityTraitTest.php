@@ -32,9 +32,8 @@ class SecurityTraitTest extends TestCase
         $password = 'foo';
         $encoded = $app->encodePassword($user, $password);
 
-        $this->assertTrue(
-            $app['security.encoder_factory']->getEncoder($user)->isPasswordValid($encoded, $password, $user->getSalt())
-        );
+        $passwordHasher = $app['security.encoder_factory']->getPasswordHasher($user);
+        $this->assertTrue($passwordHasher->verify($encoded, $password));
     }
 
     /**
